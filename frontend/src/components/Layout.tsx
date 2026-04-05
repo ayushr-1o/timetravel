@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { API_URL } from '../lib/api'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
@@ -7,7 +8,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [apiOnline, setApiOnline] = useState(false)
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/health')
+    fetch(`${API_URL}/health`)
       .then(r => r.ok ? setApiOnline(true) : setApiOnline(false))
       .catch(() => setApiOnline(false))
   }, [])
