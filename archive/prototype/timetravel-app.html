@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timetravel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+/* ── DESIGN TOKENS ── */
+:root {
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+  --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
+  --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem;
+  --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem;
+  --space-16: 4rem;
+  --radius-sm: 0.375rem; --radius-md: 0.5rem;
+  --radius-lg: 0.75rem; --radius-xl: 1rem; --radius-full: 9999px;
+  --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+:root, [data-theme="light"] {
+  --bg: #f7f6f2; --surface: #f9f8f5; --surface-2: #fbfbf9;
+  --surface-offset: #f3f0ec; --surface-dynamic: #e6e4df;
+  --divider: #dcd9d5; --border: #d4d1ca;
+  --text: #28251d; --text-muted: #7a7974; --text-faint: #bab9b4; --text-inv: #f9f8f4;
+  --primary: #01696f; --primary-h: #0c4e54; --primary-hi: #cedcd8;
+  --warning: #964219; --warning-hi: #ddcfc6;
+  --success: #437a22; --success-hi: #d4dfcc;
+  --error: #a13544; --error-hi: #dececb;
+  --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
+  --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.08);
+  --shadow-lg: 0 12px 32px oklch(0.2 0.01 80 / 0.12);
+}
+[data-theme="dark"] {
+  --bg: #171614; --surface: #1c1b19; --surface-2: #201f1d;
+  --surface-offset: #1d1c1a; --surface-dynamic: #2d2c2a;
+  --divider: #262523; --border: #393836;
+  --text: #cdccca; --text-muted: #797876; --text-faint: #5a5957; --text-inv: #2b2a28;
+  --primary: #4f98a3; --primary-h: #227f8b; --primary-hi: #313b3b;
+  --warning: #bb653b; --warning-hi: #564942;
+  --success: #6daa45; --success-hi: #3a4435;
+  --error: #dd6974; --error-hi: #574848;
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
+  --shadow-md: 0 4px 12px oklch(0 0 0 / 0.3);
+  --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.4);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) {
+  --bg: #171614; --surface: #1c1b19; --surface-2: #201f1d;
+  --surface-offset: #1d1c1a; --surface-dynamic: #2d2c2a;
+  --divider: #262523; --border: #393836;
+  --text: #cdccca; --text-muted: #797876; --text-faint: #5a5957; --text-inv: #2b2a28;
+  --primary: #4f98a3; --primary-h: #227f8b; --primary-hi: #313b3b;
+  --warning: #bb653b; --warning-hi: #564942;
+  --success: #6daa45; --success-hi: #3a4435;
+  --error: #dd6974; --error-hi: #574848;
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
+  --shadow-md: 0 4px 12px oklch(0 0 0 / 0.3);
+  --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.4);
+}}
+
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+body { min-height: 100dvh; font-family: var(--font-body); font-size: var(--text-base); color: var(--text); background: var(--bg); line-height: 1.6; }
+button { cursor: pointer; background: none; border: none; font: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: var(--radius-sm); }
+a, button, input, textarea, select { transition: color var(--transition), background var(--transition), border-color var(--transition), box-shadow var(--transition); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
+/* ── LAYOUT ── */
+.app { display: flex; height: 100dvh; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--divider);
+  display: flex; flex-direction: column;
+  padding: var(--space-4) 0;
+}
+.sidebar-logo {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) var(--space-5) var(--space-6);
+  font-family: var(--font-display); font-size: var(--text-lg);
+  color: var(--text);
+}
+.sidebar-logo svg { color: var(--primary); }
+.sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 0 var(--space-3); }
+.nav-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm); color: var(--text-muted);
+  cursor: pointer;
+}
+.nav-item:hover { background: var(--surface-offset); color: var(--text); }
+.nav-item.active { background: var(--primary-hi); color: var(--primary); font-weight: 500; }
+.nav-item i { width: 16px; height: 16px; }
+.sidebar-footer { padding: var(--space-4) var(--space-5); border-top: 1px solid var(--divider); }
+.theme-btn {
+  width: 32px; height: 32px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 0;
+}
+.theme-btn:hover { background: var(--surface-offset); color: var(--text); }
+
+/* ── MAIN ── */
+.main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+/* ── TOPBAR ── */
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: color-mix(in oklab, var(--bg) 90%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--divider);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--space-4) var(--space-8);
+  gap: var(--space-4);
+}
+.topbar-title { font-size: var(--text-xl); font-family: var(--font-display); }
+.topbar-actions { display: flex; gap: var(--space-2); align-items: center; }
+.btn-primary {
+  display: flex; align-items: center; gap: var(--space-2);
+  background: var(--primary); color: var(--text-inv);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md); font-size: var(--text-sm); font-weight: 500;
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover { background: var(--primary-h); }
+.btn-ghost {
+  display: flex; align-items: center; gap: var(--space-2);
+  color: var(--text-muted); padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md); font-size: var(--text-sm);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--surface-offset); color: var(--text); }
+
+/* ── PAGE VIEWS ── */
+.view { display: none; padding: var(--space-8); max-width: 1200px; margin: 0 auto; width: 100%; }
+.view.active { display: block; }
+
+/* ── STATS ROW ── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-8); }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+.stat-label { font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: var(--space-2); }
+.stat-value { font-size: var(--text-xl); font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.stat-sub { font-size: var(--text-xs); color: var(--text-faint); margin-top: var(--space-1); }
+.stat-card.warn .stat-value { color: var(--warning); }
+.stat-card.ok .stat-value { color: var(--success); }
+
+/* ── ARTICLE LIST ── */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+.section-title { font-size: var(--text-lg); font-weight: 600; color: var(--text); }
+.article-list { display: flex; flex-direction: column; gap: var(--space-3); }
+.article-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: var(--space-5);
+  cursor: pointer; box-shadow: var(--shadow-sm);
+  display: grid; grid-template-columns: 1fr auto; gap: var(--space-4); align-items: start;
+}
+.article-card:hover { box-shadow: var(--shadow-md); border-color: var(--primary); }
+.article-card:hover .article-title { color: var(--primary); }
+.article-meta { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2); }
+.article-source { font-size: var(--text-xs); color: var(--text-muted); font-weight: 500; }
+.article-date { font-size: var(--text-xs); color: var(--text-faint); }
+.article-title { font-size: var(--text-base); font-weight: 500; color: var(--text); margin-bottom: var(--space-2); line-height: 1.4; }
+.article-excerpt { font-size: var(--text-sm); color: var(--text-muted); line-height: 1.5; }
+.article-badges { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
+.badge {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: 2px var(--space-2); border-radius: var(--radius-full);
+  font-size: var(--text-xs); font-weight: 500; white-space: nowrap;
+}
+.badge-warn { background: var(--warning-hi); color: var(--warning); }
+.badge-ok { background: var(--success-hi); color: var(--success); }
+.badge-neutral { background: var(--surface-offset); color: var(--text-muted); }
+.badge-primary { background: var(--primary-hi); color: var(--primary); }
+.badge-error { background: var(--error-hi); color: var(--error); }
+
+/* ── REVIEW VIEW ── */
+.review-layout { display: grid; grid-template-columns: 1fr 340px; gap: var(--space-6); }
+.article-reader {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); padding: var(--space-8);
+  box-shadow: var(--shadow-sm);
+}
+.reader-header { margin-bottom: var(--space-6); padding-bottom: var(--space-6); border-bottom: 1px solid var(--divider); }
+.reader-eyebrow { font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: var(--space-2); }
+.reader-title { font-family: var(--font-display); font-size: var(--text-xl); line-height: 1.25; margin-bottom: var(--space-3); }
+.reader-byline { font-size: var(--text-sm); color: var(--text-muted); }
+.reader-body { font-size: var(--text-base); line-height: 1.8; color: var(--text); }
+.reader-body p { margin-bottom: var(--space-5); max-width: 68ch; }
+
+/* ── CLAIM HIGHLIGHTS ── */
+.claim-highlight {
+  background: oklch(from var(--warning) l c h / 0.15);
+  border-bottom: 2px solid var(--warning);
+  cursor: pointer; border-radius: 2px; padding: 0 2px;
+  transition: background var(--transition);
+}
+.claim-highlight:hover { background: oklch(from var(--warning) l c h / 0.28); }
+.claim-highlight.stale {
+  background: oklch(from var(--error) l c h / 0.12);
+  border-bottom-color: var(--error);
+}
+.claim-highlight.stale:hover { background: oklch(from var(--error) l c h / 0.22); }
+.claim-highlight.stable {
+  background: oklch(from var(--success) l c h / 0.12);
+  border-bottom-color: var(--success);
+}
+.claim-highlight.stable:hover { background: oklch(from var(--success) l c h / 0.22); }
+.claim-highlight.active {
+  background: oklch(from var(--primary) l c h / 0.18) !important;
+  border-bottom-color: var(--primary) !important;
+}
+
+/* ── CLAIM SIDEBAR ── */
+.claims-sidebar { display: flex; flex-direction: column; gap: var(--space-3); }
+.sidebar-section-title { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; margin-bottom: var(--space-2); }
+.claim-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: var(--space-4);
+  cursor: pointer; box-shadow: var(--shadow-sm);
+}
+.claim-card:hover { border-color: var(--primary); }
+.claim-card.selected { border-color: var(--primary); background: color-mix(in oklab, var(--primary-hi), var(--surface) 60%); }
+.claim-text { font-size: var(--text-sm); color: var(--text); margin-bottom: var(--space-2); line-height: 1.5; font-style: italic; }
+.claim-footer { display: flex; align-items: center; justify-content: space-between; }
+.claim-status { display: flex; align-items: center; gap: var(--space-1); font-size: var(--text-xs); }
+.freshness-bar { height: 3px; border-radius: var(--radius-full); background: var(--surface-dynamic); margin-top: var(--space-2); overflow: hidden; }
+.freshness-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.6s ease; }
+.freshness-fill.low { background: var(--error); }
+.freshness-fill.mid { background: var(--warning); }
+.freshness-fill.high { background: var(--success); }
+
+/* ── DETAIL PANEL ── */
+.detail-panel {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); padding: var(--space-6);
+  margin-top: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+.detail-claim-text {
+  font-style: italic; color: var(--text); font-size: var(--text-base);
+  padding: var(--space-4); background: var(--surface-offset);
+  border-radius: var(--radius-md); margin-bottom: var(--space-5);
+  border-left: 3px solid var(--warning);
+  line-height: 1.6;
+}
+.detail-claim-text.stale { border-left-color: var(--error); }
+.detail-claim-text.stable { border-left-color: var(--success); }
+.detail-section { margin-bottom: var(--space-5); }
+.detail-section-label { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; margin-bottom: var(--space-3); }
+.source-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-2); display: flex; gap: var(--space-3); align-items: flex-start;
+}
+.source-dot { width: 8px; height: 8px; border-radius: var(--radius-full); flex-shrink: 0; margin-top: 5px; }
+.source-dot.high { background: var(--success); }
+.source-dot.mid { background: var(--warning); }
+.source-dot.low { background: var(--error); }
+.source-title { font-size: var(--text-sm); font-weight: 500; color: var(--text); margin-bottom: 2px; }
+.source-meta { font-size: var(--text-xs); color: var(--text-muted); }
+.review-actions { display: flex; gap: var(--space-2); margin-top: var(--space-4); }
+.btn-approve { background: var(--success-hi); color: var(--success); padding: var(--space-2) var(--space-4); border-radius: var(--radius-md); font-size: var(--text-sm); font-weight: 500; display: flex; align-items: center; gap: var(--space-2); }
+.btn-approve:hover { filter: brightness(0.95); }
+.btn-flag { background: var(--warning-hi); color: var(--warning); padding: var(--space-2) var(--space-4); border-radius: var(--radius-md); font-size: var(--text-sm); font-weight: 500; display: flex; align-items: center; gap: var(--space-2); }
+.btn-flag:hover { filter: brightness(0.95); }
+.btn-dismiss { background: var(--surface-offset); color: var(--text-muted); padding: var(--space-2) var(--space-4); border-radius: var(--radius-md); font-size: var(--text-sm); font-weight: 500; display: flex; align-items: center; gap: var(--space-2); }
+.btn-dismiss:hover { background: var(--surface-dynamic); color: var(--text); }
+
+/* ── PIPELINE VIEW ── */
+.pipeline-header { margin-bottom: var(--space-8); }
+.pipeline-desc { color: var(--text-muted); font-size: var(--text-sm); margin-top: var(--space-2); }
+.pipeline-grid { display: flex; flex-direction: column; gap: var(--space-4); }
+.pipeline-node {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); padding: var(--space-6);
+  box-shadow: var(--shadow-sm); display: grid;
+  grid-template-columns: 48px 1fr auto; gap: var(--space-4); align-items: start;
+}
+.pipeline-node.running { border-color: var(--primary); }
+.pipeline-node.done { border-color: var(--success); }
+.pipeline-node.waiting { opacity: 0.55; }
+.node-icon {
+  width: 48px; height: 48px; border-radius: var(--radius-lg);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-offset);
+  flex-shrink: 0;
+}
+.node-icon.running { background: var(--primary-hi); color: var(--primary); }
+.node-icon.done { background: var(--success-hi); color: var(--success); }
+.node-name { font-weight: 600; color: var(--text); margin-bottom: var(--space-1); }
+.node-desc { font-size: var(--text-sm); color: var(--text-muted); line-height: 1.5; }
+.node-status-tag { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); font-weight: 500; white-space: nowrap; margin-top: 2px; }
+.node-status-tag.running { color: var(--primary); }
+.node-status-tag.done { color: var(--success); }
+.node-status-tag.waiting { color: var(--text-faint); }
+.pulse { display: inline-block; width: 8px; height: 8px; border-radius: var(--radius-full); background: currentColor; animation: pulse 1.2s ease-in-out infinite; }
+.done-check { display: inline-block; width: 8px; height: 8px; border-radius: var(--radius-full); background: currentColor; }
+.waiting-dot { display: inline-block; width: 8px; height: 8px; border-radius: var(--radius-full); background: currentColor; opacity: 0.4; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+.connector { display: flex; justify-content: center; padding: 4px 0; color: var(--text-faint); }
+.n8n-badge {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  background: var(--surface-offset); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-6);
+}
+
+/* ── SUBMIT MODAL ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 50;
+  background: oklch(0.1 0 0 / 0.5); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); padding: var(--space-8);
+  width: 520px; max-width: 90vw;
+  box-shadow: var(--shadow-lg);
+}
+.modal-title { font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--space-2); }
+.modal-desc { font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-6); }
+.form-field { margin-bottom: var(--space-4); }
+.form-label { display: block; font-size: var(--text-sm); font-weight: 500; color: var(--text); margin-bottom: var(--space-2); }
+.form-input, .form-textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm); color: var(--text); font-family: var(--font-body);
+  resize: none;
+}
+.form-input:focus, .form-textarea:focus { outline: 2px solid var(--primary); outline-offset: -1px; border-color: transparent; }
+.modal-actions { display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-6); }
+
+/* ── PROCESSING TOAST ── */
+.processing-banner {
+  display: none; background: var(--primary-hi); border: 1px solid var(--primary);
+  border-radius: var(--radius-lg); padding: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-6); align-items: center; gap: var(--space-3);
+  font-size: var(--text-sm); color: var(--primary);
+}
+.processing-banner.show { display: flex; }
+.processing-spinner {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--primary-hi); border-top-color: var(--primary);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── EMPTY STATE ── */
+.empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; padding: var(--space-16) var(--space-8); color: var(--text-muted); }
+.empty-state h3 { color: var(--text); margin-bottom: var(--space-2); font-size: var(--text-lg); }
+.empty-state p { max-width: 36ch; margin-bottom: var(--space-6); font-size: var(--text-sm); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .review-layout { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .sidebar { width: 64px; }
+  .sidebar-logo span, .nav-item span, .sidebar-footer .theme-btn { display: none; }
+  .nav-item { justify-content: center; }
+  .view { padding: var(--space-4); }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg aria-label="Timetravel logo" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
+        <polyline points="12 7 12 12 15 15"/>
+        <path d="M5 3L3 5M19 3l2 2"/>
+      </svg>
+      <span>Timetravel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showView('dashboard', this)">
+        <i data-lucide="layout-dashboard"></i><span>Dashboard</span>
+      </button>
+      <button class="nav-item" onclick="showView('review', this)">
+        <i data-lucide="file-search"></i><span>Review</span>
+      </button>
+      <button class="nav-item" onclick="showView('pipeline', this)">
+        <i data-lucide="git-branch"></i><span>Pipeline</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="theme-btn" data-theme-toggle aria-label="Toggle theme">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard" class="view active">
+      <div class="topbar">
+        <h1 class="topbar-title">Articles</h1>
+        <div class="topbar-actions">
+          <button class="btn-ghost" onclick="document.getElementById('modal').classList.add('open')">
+            <i data-lucide="plus" style="width:14px;height:14px"></i> Submit Article
+          </button>
+        </div>
+      </div>
+      <div style="padding: var(--space-8);">
+        <div id="processing-banner" class="processing-banner">
+          <div class="processing-spinner"></div>
+          <span>Analysing <strong>"ECB holds interest rates…"</strong> — Claim Detector running (step 2/4)</span>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Total Articles</div>
+            <div class="stat-value">24</div>
+            <div class="stat-sub">this month</div>
+          </div>
+          <div class="stat-card warn">
+            <div class="stat-label">Claims Flagged</div>
+            <div class="stat-value">47</div>
+            <div class="stat-sub">need review</div>
+          </div>
+          <div class="stat-card ok">
+            <div class="stat-label">Reviewed</div>
+            <div class="stat-value">31</div>
+            <div class="stat-sub">this week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg Freshness</div>
+            <div class="stat-value">72%</div>
+            <div class="stat-sub">across corpus</div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <span class="section-title">Recent articles</span>
+          <span class="badge badge-neutral">Sorted by risk</span>
+        </div>
+
+        <div class="article-list">
+          <div class="article-card" onclick="showView('review', null)">
+            <div>
+              <div class="article-meta">
+                <span class="article-source">NRC Handelsblad</span>
+                <span class="article-date">28 Mar 2026</span>
+              </div>
+              <div class="article-title">Inflatie in eurozone daalt naar 2,2% in maart, laagste niveau in drie jaar</div>
+              <div class="article-excerpt">De inflatie in de eurozone is in maart gedaald naar 2,2 procent, het laagste niveau in bijna drie jaar. Economen verwachten dat de ECB de rente binnenkort opnieuw zal verlagen.</div>
+            </div>
+            <div class="article-badges">
+              <span class="badge badge-error">4 stale claims</span>
+              <span class="badge badge-warn">High risk</span>
+            </div>
+          </div>
+
+          <div class="article-card" onclick="showView('review', null)">
+            <div>
+              <div class="article-meta">
+                <span class="article-source">The Guardian</span>
+                <span class="article-date">27 Mar 2026</span>
+              </div>
+              <div class="article-title">UK government announces £2.4bn investment in offshore wind capacity</div>
+              <div class="article-excerpt">The UK government has committed to a major expansion of offshore wind energy as part of its net-zero by 2050 strategy, with new contracts awarded to five suppliers.</div>
+            </div>
+            <div class="article-badges">
+              <span class="badge badge-warn">2 uncertain claims</span>
+              <span class="badge badge-neutral">Medium risk</span>
+            </div>
+          </div>
+
+          <div class="article-card" onclick="showView('review', null)">
+            <div>
+              <div class="article-meta">
+                <span class="article-source">El País</span>
+                <span class="article-date">26 Mar 2026</span>
+              </div>
+              <div class="article-title">España supera los 22 millones de turistas en el primer trimestre de 2026</div>
+              <div class="article-excerpt">El sector turístico español registra un primer trimestre récord, con más viajeros internacionales que en el mismo período del año anterior, impulsado por el turismo procedente de Asia.</div>
+            </div>
+            <div class="article-badges">
+              <span class="badge badge-ok">All stable</span>
+              <span class="badge badge-neutral">Low risk</span>
+            </div>
+          </div>
+
+          <div class="article-card" onclick="showView('review', null)">
+            <div>
+              <div class="article-meta">
+                <span class="article-source">De Volkskrant</span>
+                <span class="article-date">25 Mar 2026</span>
+              </div>
+              <div class="article-title">Nederland wil windparken op Noordzee verdubbelen tegen 2030</div>
+              <div class="article-excerpt">Het kabinet presenteert een nieuw plan voor de uitbreiding van windenergie op zee, met als doel de productiecapaciteit te verdubbelen in de komende vier jaar.</div>
+            </div>
+            <div class="article-badges">
+              <span class="badge badge-warn">3 uncertain claims</span>
+              <span class="badge badge-neutral">Medium risk</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEW VIEW -->
+    <div id="view-review" class="view">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:var(--space-3)">
+          <button class="btn-ghost" onclick="showView('dashboard', null)" style="padding: var(--space-2);">
+            <i data-lucide="arrow-left" style="width:16px;height:16px"></i>
+          </button>
+          <div>
+            <div style="font-size:var(--text-xs);color:var(--text-muted)">NRC Handelsblad · 28 Mar 2026</div>
+            <h1 style="font-size:var(--text-lg);font-weight:600">Inflatie in eurozone daalt naar 2,2%</h1>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span class="badge badge-error" style="padding: var(--space-2) var(--space-3);">4 claims need review</span>
+          <button class="btn-primary">
+            <i data-lucide="check" style="width:14px;height:14px"></i> Approve all
+          </button>
+        </div>
+      </div>
+      <div style="padding: var(--space-8);">
+        <div class="review-layout">
+          <!-- Article reader -->
+          <div>
+            <div class="article-reader">
+              <div class="reader-header">
+                <div class="reader-eyebrow">NRC Handelsblad · Economie · 28 maart 2026</div>
+                <h2 class="reader-title">Inflatie in eurozone daalt naar 2,2% in maart, laagste niveau in drie jaar</h2>
+                <div class="reader-byline">Door Sophie van den Berg · <span style="color:var(--text-faint)">8 minuten leestijd</span></div>
+              </div>
+              <div class="reader-body">
+                <p>
+                  De inflatie in de eurozone is in maart 2026 gedaald naar 2,2 procent, het laagste niveau in bijna drie jaar. Dat heeft het Europees statistiekbureau Eurostat dinsdag bekendgemaakt.
+                  <span class="claim-highlight stable" data-claim="0" onclick="selectClaim(0)">De Europese Centrale Bank heeft de rente in 2024 meerdere keren verlaagd</span>, wat volgens economen heeft bijgedragen aan de verkoeling van de economie.
+                </p>
+                <p>
+                  Energie was de grootste oorzaak van de inflatiedaling.
+                  <span class="claim-highlight" data-claim="1" onclick="selectClaim(1)">De gasprijs in Europa is de afgelopen twaalf maanden met meer dan veertig procent gedaald</span>.
+                  Dit heeft directe gevolgen voor huishoudens en bedrijven die afhankelijk zijn van gas voor verwarming en productie.
+                </p>
+                <p>
+                  Kerninflatie — de inflatie exclusief energie en voedsel — bleef echter hardnekkig hoog.
+                  <span class="claim-highlight stale" data-claim="2" onclick="selectClaim(2)">Kerninflatie stond in februari op 3,1 procent</span>,
+                  wat aangeeft dat de onderliggende prijsdruk in de dienstensector nog niet is geweken.
+                </p>
+                <p>
+                  Economen van Deutsche Bank en ING verwachten dat de ECB in juni opnieuw een renteverlaging zal doorvoeren.
+                  <span class="claim-highlight stale" data-claim="3" onclick="selectClaim(3)">De beleidsrente staat momenteel op 3,75 procent</span>,
+                  en een verlaging naar 3,50 procent wordt door de markten ingeprijsd als een scenario met meer dan zeventig procent kans.
+                </p>
+              </div>
+            </div>
+
+            <!-- Detail panel (shown when claim selected) -->
+            <div id="detail-panel" class="detail-panel" style="display:none;">
+              <div id="detail-claim-text" class="detail-claim-text"></div>
+              <div class="detail-section">
+                <div class="detail-section-label">Freshness score</div>
+                <div style="display:flex;align-items:center;gap:var(--space-3)">
+                  <div class="freshness-bar" style="flex:1"><div id="detail-freshness-bar" class="freshness-fill" style="width:0%"></div></div>
+                  <span id="detail-freshness-label" style="font-size:var(--text-sm);font-weight:600;color:var(--text)"></span>
+                </div>
+              </div>
+              <div class="detail-section">
+                <div class="detail-section-label">Suggested sources</div>
+                <div id="detail-sources"></div>
+              </div>
+              <div class="review-actions">
+                <button class="btn-approve"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Approve</button>
+                <button class="btn-flag"><i data-lucide="alert-triangle" style="width:14px;height:14px"></i> Flag for editor</button>
+                <button class="btn-dismiss"><i data-lucide="x" style="width:14px;height:14px"></i> Dismiss</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Claims sidebar -->
+          <div class="claims-sidebar">
+            <div class="sidebar-section-title">Detected claims (4)</div>
+            <div id="claims-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIPELINE VIEW -->
+    <div id="view-pipeline" class="view">
+      <div class="topbar">
+        <h1 class="topbar-title">n8n Workflow</h1>
+        <div class="topbar-actions">
+          <span class="badge badge-primary">Live trace</span>
+          <button class="btn-ghost">
+            <i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Rerun
+          </button>
+        </div>
+      </div>
+      <div style="padding: var(--space-8);">
+        <div class="pipeline-header">
+          <div class="pipeline-desc">Real-time view of the Timetravel n8n workflow for article <strong>"Inflatie in eurozone daalt naar 2,2%"</strong></div>
+        </div>
+
+        <div class="pipeline-grid">
+          <div class="pipeline-node done">
+            <div class="node-icon done"><i data-lucide="file-input" style="width:20px;height:20px"></i></div>
+            <div>
+              <div class="node-name">Article Ingestion</div>
+              <div class="node-desc">Article text extracted and cleaned. 4 paragraphs, 312 tokens prepared for analysis.</div>
+              <div class="node-status-tag done"><span class="done-check"></span> Completed · 0.8s</div>
+            </div>
+            <div><span class="badge badge-ok">Done</span></div>
+          </div>
+
+          <div class="connector"><i data-lucide="arrow-down" style="width:16px;height:16px"></i></div>
+
+          <div class="pipeline-node done">
+            <div class="node-icon done"><i data-lucide="scan-text" style="width:20px;height:20px"></i></div>
+            <div>
+              <div class="node-name">Claim Detector</div>
+              <div class="node-desc">Agent identified 4 time-sensitive claims using Llama 3.1 via OpenRouter. Each claim scored by temporal sensitivity.</div>
+              <div class="node-status-tag done"><span class="done-check"></span> Completed · 3.2s · 4 claims found</div>
+            </div>
+            <div><span class="badge badge-ok">Done</span></div>
+          </div>
+
+          <div class="connector"><i data-lucide="arrow-down" style="width:16px;height:16px"></i></div>
+
+          <div class="pipeline-node running">
+            <div class="node-icon running"><i data-lucide="thermometer" style="width:20px;height:20px"></i></div>
+            <div>
+              <div class="node-name">Freshness Verifier</div>
+              <div class="node-desc">Checking each claim against live news and data sources. Cross-referencing ECB rate decisions and Eurostat figures.</div>
+              <div class="node-status-tag running"><span class="pulse"></span> Running · claim 3 of 4</div>
+            </div>
+            <div><span class="badge badge-primary">Running</span></div>
+          </div>
+
+          <div class="connector"><i data-lucide="arrow-down" style="width:16px;height:16px"></i></div>
+
+          <div class="pipeline-node waiting">
+            <div class="node-icon"><i data-lucide="book-marked" style="width:20px;height:20px"></i></div>
+            <div>
+              <div class="node-name">Source Recommender</div>
+              <div class="node-desc">Will suggest updated sources and follow-up context for stale or uncertain claims.</div>
+              <div class="node-status-tag waiting"><span class="waiting-dot"></span> Waiting for Freshness Verifier</div>
+            </div>
+            <div><span class="badge badge-neutral">Queued</span></div>
+          </div>
+
+          <div class="connector"><i data-lucide="arrow-down" style="width:16px;height:16px"></i></div>
+
+          <div class="pipeline-node waiting">
+            <div class="node-icon"><i data-lucide="database" style="width:20px;height:20px"></i></div>
+            <div>
+              <div class="node-name">Save to Supabase</div>
+              <div class="node-desc">Structured results written to articles, claims, and source_suggestions tables. Review status set to "pending".</div>
+              <div class="node-status-tag waiting"><span class="waiting-dot"></span> Waiting</div>
+            </div>
+            <div><span class="badge badge-neutral">Queued</span></div>
+          </div>
+        </div>
+
+        <div class="n8n-badge">
+          <img src="https://cdn.simpleicons.org/n8n/EA4B71" width="16" height="16" alt="n8n" loading="lazy">
+          Orchestrated by n8n · Deployed on Render · Model: Llama 3.1 8B via OpenRouter
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- SUBMIT MODAL -->
+<div id="modal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-title">Submit an article</div>
+    <div class="modal-desc">Paste a URL or article text to start the Timetravel analysis pipeline.</div>
+    <div class="form-field">
+      <label class="form-label" for="article-url">Article URL</label>
+      <input class="form-input" id="article-url" type="url" placeholder="https://www.nrc.nl/nieuws/...">
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="article-text">Or paste text</label>
+      <textarea class="form-textarea" id="article-text" rows="5" placeholder="Paste article content here..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="document.getElementById('modal').classList.remove('open')">Cancel</button>
+      <button class="btn-primary" onclick="submitArticle()">
+        <i data-lucide="zap" style="width:14px;height:14px"></i> Analyse
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── THEME TOGGLE ──
+(function(){
+  const r = document.documentElement;
+  let d = matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
+  r.setAttribute('data-theme', d);
+  const t = document.querySelector('[data-theme-toggle]');
+  if(t) t.addEventListener('click', () => {
+    d = d === 'dark' ? 'light' : 'dark';
+    r.setAttribute('data-theme', d);
+    t.innerHTML = d === 'dark'
+      ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`
+      : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+  });
+})();
+
+// ── CLAIMS DATA ──
+const claims = [
+  {
+    id: 0, status: 'stable', freshness: 88,
+    text: 'De Europese Centrale Bank heeft de rente in 2024 meerdere keren verlaagd',
+    analysis: 'Claim is accurate. ECB cut rates 4 times in 2024, confirmed by ECB press releases.',
+    sources: [
+      { title: 'ECB Press Conference, December 2024', url: '#', reliability: 'high', date: 'Dec 2024' },
+      { title: 'Reuters: ECB rate decision summary', url: '#', reliability: 'high', date: 'Jan 2025' },
+    ]
+  },
+  {
+    id: 1, status: 'uncertain', freshness: 54,
+    text: 'De gasprijs in Europa is de afgelopen twaalf maanden met meer dan veertig procent gedaald',
+    analysis: 'Claim is plausible but the exact figure (40%) could not be verified against current TTF gas prices. Recent data suggests ~28% decline.',
+    sources: [
+      { title: 'EEX TTF Natural Gas Prices', url: '#', reliability: 'high', date: 'Mar 2026' },
+      { title: 'Bloomberg: European energy markets Q1', url: '#', reliability: 'mid', date: 'Mar 2026' },
+    ]
+  },
+  {
+    id: 2, status: 'stale', freshness: 22,
+    text: 'Kerninflatie stond in februari op 3,1 procent',
+    analysis: 'Outdated. Eurostat released updated March 2026 figures: core inflation is now 2.6%, not 3.1%. Article should be updated.',
+    sources: [
+      { title: 'Eurostat: Core inflation March 2026', url: '#', reliability: 'high', date: 'Apr 2026' },
+      { title: 'ECB Economic Bulletin April 2026', url: '#', reliability: 'high', date: 'Apr 2026' },
+    ]
+  },
+  {
+    id: 3, status: 'stale', freshness: 18,
+    text: 'De beleidsrente staat momenteel op 3,75 procent',
+    analysis: 'Stale. The ECB cut rates to 3.25% in March 2026. This claim is significantly outdated and needs correction.',
+    sources: [
+      { title: 'ECB: Key interest rates', url: '#', reliability: 'high', date: 'Mar 2026' },
+      { title: 'Financial Times: ECB rate cut March 2026', url: '#', reliability: 'high', date: 'Mar 2026' },
+    ]
+  }
+];
+
+let selectedClaim = null;
+
+function renderClaims() {
+  const list = document.getElementById('claims-list');
+  list.innerHTML = claims.map(c => {
+    const statusColors = { stable: 'badge-ok', uncertain: 'badge-warn', stale: 'badge-error' };
+    const statusLabels = { stable: 'Stable', uncertain: 'Uncertain', stale: 'Stale' };
+    const fillClass = c.freshness >= 70 ? 'high' : c.freshness >= 40 ? 'mid' : 'low';
+    return `
+      <div class="claim-card ${selectedClaim === c.id ? 'selected' : ''}" id="claim-card-${c.id}" onclick="selectClaim(${c.id})">
+        <div class="claim-text">"${c.text}"</div>
+        <div class="claim-footer">
+          <span class="badge ${statusColors[c.status]}">${statusLabels[c.status]}</span>
+          <span style="font-size:var(--text-xs);color:var(--text-muted)">Freshness ${c.freshness}%</span>
+        </div>
+        <div class="freshness-bar"><div class="freshness-fill ${fillClass}" style="width:${c.freshness}%"></div></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectClaim(id) {
+  selectedClaim = id;
+  const c = claims[id];
+
+  // Update sidebar
+  document.querySelectorAll('.claim-card').forEach(el => el.classList.remove('selected'));
+  const card = document.getElementById('claim-card-' + id);
+  if(card) card.classList.add('selected');
+
+  // Update highlights
+  document.querySelectorAll('.claim-highlight').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll(`[data-claim="${id}"]`).forEach(el => el.classList.add('active'));
+
+  // Show detail panel
+  const panel = document.getElementById('detail-panel');
+  const textEl = document.getElementById('detail-claim-text');
+  const barEl = document.getElementById('detail-freshness-bar');
+  const labelEl = document.getElementById('detail-freshness-label');
+  const sourcesEl = document.getElementById('detail-sources');
+
+  panel.style.display = 'block';
+  textEl.textContent = '"' + c.text + '"';
+  textEl.className = 'detail-claim-text ' + (c.status !== 'stable' ? c.status : '');
+
+  const fillClass = c.freshness >= 70 ? 'high' : c.freshness >= 40 ? 'mid' : 'low';
+  barEl.className = 'freshness-fill ' + fillClass;
+  setTimeout(() => { barEl.style.width = c.freshness + '%'; }, 50);
+  labelEl.textContent = c.freshness + '%';
+
+  const relColors = { high: 'high', mid: 'mid', low: 'low' };
+  sourcesEl.innerHTML = c.sources.map(s => `
+    <div class="source-card">
+      <div class="source-dot ${relColors[s.reliability] || 'mid'}"></div>
+      <div>
+        <div class="source-title">${s.title}</div>
+        <div class="source-meta">${s.date} · ${s.reliability === 'high' ? 'High reliability' : s.reliability === 'mid' ? 'Medium reliability' : 'Low reliability'}</div>
+      </div>
+    </div>
+  `).join('');
+
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── VIEW NAVIGATION ──
+function showView(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  else {
+    const match = { dashboard: 0, review: 1, pipeline: 2 }[name];
+    document.querySelectorAll('.nav-item')[match].classList.add('active');
+  }
+  if(name === 'review') { renderClaims(); }
+}
+
+// ── SUBMIT ARTICLE ──
+function submitArticle() {
+  document.getElementById('modal').classList.remove('open');
+  const banner = document.getElementById('processing-banner');
+  banner.classList.add('show');
+  setTimeout(() => banner.classList.remove('show'), 5000);
+}
+
+// ── INIT ──
+lucide.createIcons();
+renderClaims();
+</script>
+</body>
+</html>

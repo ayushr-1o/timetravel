@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timetravel — Editorial Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1a1a1a;--ink-muted:#5a5a5a;--ink-faint:#9a9a9a;
+  --paper:#f7f4ef;--paper-dark:#ede9e2;--white:#ffffff;--border:#d8d3c8;
+  --red:#c0392b;--red-hover:#a93226;--green:#27ae60;--green-hover:#219150;
+  --amber:#e67e22;--blue:#2980b9;
+  --font-display:"Playfair Display",Georgia,serif;
+  --font-body:"Inter","Helvetica Neue",sans-serif;
+  --radius:6px;
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 16px rgba(0,0,0,0.04);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.10);
+  --transition:180ms cubic-bezier(0.16,1,0.3,1);
+}
+html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{font-family:var(--font-body);font-size:14px;color:var(--ink);background:var(--paper);min-height:100vh;display:flex;flex-direction:column}
+button{cursor:pointer;font-family:var(--font-body)}
+a{color:inherit;text-decoration:none}
+
+.masthead{background:var(--ink);color:var(--white);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.masthead-logo{font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:-0.5px;display:flex;align-items:center;gap:8px}
+.masthead-logo span{color:var(--red)}
+.masthead-rule{width:1px;height:24px;background:rgba(255,255,255,0.2);margin:0 20px}
+.masthead-nav{display:flex;gap:4px}
+.nav-btn{background:none;border:none;color:rgba(255,255,255,0.6);padding:6px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;transition:color var(--transition),background var(--transition)}
+.nav-btn:hover{color:var(--white);background:rgba(255,255,255,0.08)}
+.nav-btn.active{color:var(--white);background:rgba(255,255,255,0.12)}
+.masthead-right{display:flex;align-items:center;gap:12px}
+.submit-btn{background:var(--red);color:var(--white);border:none;padding:7px 16px;border-radius:var(--radius);font-size:13px;font-weight:600;transition:background var(--transition)}
+.submit-btn:hover{background:var(--red-hover)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#27ae60;box-shadow:0 0 0 2px rgba(39,174,96,0.3)}
+.status-dot.offline{background:var(--red);box-shadow:0 0 0 2px rgba(192,57,43,0.3)}
+
+.app-body{flex:1;display:flex;flex-direction:column}
+.page{display:none;flex:1}
+.page.active{display:flex;flex-direction:column}
+
+.ticker{background:var(--ink);color:var(--white);padding:6px 32px;font-size:11px;font-weight:500;letter-spacing:0.5px;display:flex;align-items:center;gap:16px;overflow:hidden}
+.ticker-label{background:var(--red);padding:2px 8px;border-radius:2px;font-size:10px;font-weight:700;letter-spacing:1px;white-space:nowrap}
+.ticker-text{font-size:11px;color:rgba(255,255,255,0.7)}
+
+/* LOADING */
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.skeleton{background:linear-gradient(90deg,var(--paper-dark) 25%,var(--border) 50%,var(--paper-dark) 75%);background-size:200% 100%;animation:shimmer 1.5s ease-in-out infinite;border-radius:var(--radius)}
+.skeleton-line{height:12px;margin-bottom:8px;border-radius:3px}
+.skeleton-line.short{width:60%}
+
+/* DASHBOARD */
+.dashboard-layout{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;padding:24px 32px;max-width:1400px;width:100%;margin:0 auto}
+.kpi-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.kpi{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;position:relative;overflow:hidden}
+.kpi::before{content:"";position:absolute;top:0;left:0;width:3px;height:100%;background:var(--red)}
+.kpi-label{font-size:11px;font-weight:600;letter-spacing:0.8px;color:var(--ink-faint);text-transform:uppercase;margin-bottom:6px}
+.kpi-value{font-family:var(--font-display);font-size:32px;font-weight:700;line-height:1;color:var(--ink)}
+.kpi-sub{font-size:11px;color:var(--ink-muted);margin-top:4px}
+.kpi-value.green{color:var(--green)}.kpi-value.red{color:var(--red)}.kpi-value.amber{color:var(--amber)}
+.panel{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.panel-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-family:var(--font-display);font-size:15px;font-weight:600}
+.panel-action{font-size:12px;color:var(--red);font-weight:500;cursor:pointer}
+.panel-action:hover{text-decoration:underline}
+.articles-panel{grid-column:1/3}.activity-panel{grid-column:3/4}
+.article-row{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;cursor:pointer;transition:background var(--transition)}
+.article-row:last-child{border-bottom:none}
+.article-row:hover{background:var(--paper)}
+.article-title{font-size:13px;font-weight:500;flex:1;line-height:1.4}
+.article-meta{font-size:11px;color:var(--ink-faint);margin-top:2px}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:0.3px;white-space:nowrap}
+.badge-processing{background:#fef3cd;color:#856404}
+.badge-done{background:#d1ecf1;color:#0c5460}
+.badge-error{background:#f8d7da;color:#721c24}
+.badge-pending{background:#e2e3e5;color:#383d41}
+.claim-count{font-size:11px;color:var(--ink-muted);white-space:nowrap}
+
+/* REVIEW */
+.review-layout{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 56px - 33px);overflow:hidden}
+.claims-sidebar{border-right:1px solid var(--border);overflow-y:auto;background:var(--white)}
+.sidebar-header{padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--white);z-index:10}
+.sidebar-title{font-family:var(--font-display);font-size:16px;font-weight:600}
+.sidebar-sub{font-size:11px;color:var(--ink-faint);margin-top:2px}
+.sidebar-filters{display:flex;gap:6px;margin-top:10px}
+.filter-chip{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--border);background:none;color:var(--ink-muted);cursor:pointer;transition:all var(--transition)}
+.filter-chip.active{background:var(--ink);color:var(--white);border-color:var(--ink)}
+.claim-item{padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background var(--transition);border-left:3px solid transparent}
+.claim-item:hover{background:var(--paper)}
+.claim-item.active{background:#fef8f0;border-left-color:var(--red)}
+.claim-item.approved{border-left-color:var(--green)}
+.claim-item.rejected{border-left-color:var(--red);opacity:0.6}
+.claim-text-preview{font-size:12px;line-height:1.5;color:var(--ink);margin-bottom:6px}
+.claim-meta-row{display:flex;align-items:center;justify-content:space-between}
+.freshness-bar{height:3px;border-radius:2px;background:var(--border);flex:1;margin:0 8px;overflow:hidden}
+.freshness-fill{height:100%;border-radius:2px}
+.review-main{overflow-y:auto;background:var(--paper)}
+.review-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--ink-faint);gap:12px}
+.review-empty-icon{font-size:48px;opacity:0.3}
+.claim-detail{padding:28px 32px;max-width:800px}
+.claim-detail-header{margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid var(--ink)}
+.claim-detail-label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--red);text-transform:uppercase;margin-bottom:8px}
+.claim-detail-text{font-family:var(--font-display);font-size:22px;font-weight:600;line-height:1.4}
+.claim-detail-badges{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.claim-analysis{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px}
+.claim-analysis-title{font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+.claim-analysis-text{font-size:13px;color:var(--ink-muted);line-height:1.6}
+.sources-title{font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sources-title::after{content:"";flex:1;height:1px;background:var(--border)}
+.source-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;transition:box-shadow var(--transition)}
+.source-card:hover{box-shadow:var(--shadow)}
+.source-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
+.source-title{font-size:13px;font-weight:600;line-height:1.4}
+.source-url{font-size:11px;color:var(--blue);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px}
+.source-summary{font-size:12px;color:var(--ink-muted);line-height:1.6;margin-top:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.rel-high{background:#d4edda;color:#155724}.rel-medium{background:#fff3cd;color:#856404}.rel-low{background:#f8d7da;color:#721c24}
+.review-actions{display:flex;gap:12px;padding:20px 0;border-top:1px solid var(--border);margin-top:8px;align-items:center}
+.btn-approve{background:var(--green);color:var(--white);border:none;padding:10px 24px;border-radius:var(--radius);font-size:13px;font-weight:600;transition:background var(--transition)}
+.btn-approve:hover{background:var(--green-hover)}
+.btn-reject{background:none;color:var(--red);border:2px solid var(--red);padding:10px 24px;border-radius:var(--radius);font-size:13px;font-weight:600;transition:all var(--transition)}
+.btn-reject:hover{background:var(--red);color:var(--white)}
+.btn-skip{background:none;color:var(--ink-muted);border:1px solid var(--border);padding:10px 24px;border-radius:var(--radius);font-size:13px;font-weight:500;transition:all var(--transition)}
+.btn-skip:hover{border-color:var(--ink-muted);color:var(--ink)}
+.notes-input{flex:1;border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-family:var(--font-body);font-size:13px;color:var(--ink);background:var(--white);resize:none;height:42px;transition:border-color var(--transition)}
+.notes-input:focus{outline:none;border-color:var(--ink)}
+
+/* TIME SENSITIVE */
+.timesensitive-layout{padding:28px 32px;max-width:1200px;margin:0 auto;width:100%}
+.ts-header{margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid var(--ink)}
+.ts-title{font-family:var(--font-display);font-size:28px;font-weight:700}
+.ts-sub{font-size:13px;color:var(--ink-muted);margin-top:6px}
+.ts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.ts-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.ts-card-header{padding:14px 20px;border-bottom:1px solid var(--border);background:#fffbf0;display:flex;align-items:center;justify-content:space-between}
+.ts-card-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--amber)}
+.ts-card-body{padding:20px}
+.ts-section-label{font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
+.ts-original-text{font-size:13px;color:var(--ink-muted);line-height:1.6;padding:10px 14px;background:var(--paper);border-radius:var(--radius);border-left:3px solid var(--border);margin-bottom:16px}
+.ts-rewrite-text{font-size:13px;color:var(--ink);line-height:1.6;padding:10px 14px;background:#f0faf0;border-radius:var(--radius);border-left:3px solid var(--green);margin-bottom:16px}
+.ts-rewrite-text:focus{outline:none;background:#fffbf0;border-left-color:var(--amber)}
+.ts-actions{display:flex;gap:8px}
+.ts-btn-accept{background:var(--green);color:var(--white);border:none;padding:7px 16px;border-radius:var(--radius);font-size:12px;font-weight:600;transition:background var(--transition)}
+.ts-btn-accept:hover{background:var(--green-hover)}
+.ts-btn-edit{background:none;border:1px solid var(--border);color:var(--ink-muted);padding:7px 16px;border-radius:var(--radius);font-size:12px;font-weight:500;transition:all var(--transition)}
+.ts-btn-edit:hover{border-color:var(--ink-muted);color:var(--ink)}
+.ts-btn-dismiss{background:none;border:none;color:var(--ink-faint);padding:7px 12px;font-size:12px;transition:color var(--transition)}
+.ts-btn-dismiss:hover{color:var(--red)}
+.freshness-pill{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.fp-low{background:#f8d7da;color:#721c24}.fp-med{background:#fff3cd;color:#856404}.fp-high{background:#d4edda;color:#155724}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:var(--radius);padding:32px;width:560px;max-width:90vw;box-shadow:var(--shadow-lg)}
+.modal-title{font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--ink-muted);margin-bottom:24px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:6px;display:block;letter-spacing:0.3px}
+.form-input{width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-family:var(--font-body);font-size:13px;color:var(--ink);background:var(--white);transition:border-color var(--transition)}
+.form-input:focus{outline:none;border-color:var(--ink)}
+.form-textarea{resize:vertical;min-height:120px}
+.form-divider{text-align:center;color:var(--ink-faint);font-size:12px;margin:12px 0;position:relative}
+.form-divider::before,.form-divider::after{content:"";position:absolute;top:50%;width:42%;height:1px;background:var(--border)}
+.form-divider::before{left:0}.form-divider::after{right:0}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+.modal-cancel{background:none;border:1px solid var(--border);color:var(--ink-muted);padding:9px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;transition:all var(--transition)}
+.modal-cancel:hover{border-color:var(--ink-muted);color:var(--ink)}
+.modal-submit{background:var(--red);color:var(--white);border:none;padding:9px 20px;border-radius:var(--radius);font-size:13px;font-weight:600;transition:background var(--transition)}
+.modal-submit:hover{background:var(--red-hover)}
+.modal-submit:disabled{opacity:0.6;cursor:not-allowed}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--white);padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);transform:translateY(80px);opacity:0;transition:all 300ms cubic-bezier(0.16,1,0.3,1);z-index:300}
+.toast.show{transform:translateY(0);opacity:1}
+
+.error-banner{background:#f8d7da;border:1px solid #f5c6cb;color:#721c24;padding:10px 16px;border-radius:var(--radius);font-size:12px;margin:12px 20px}
+
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-faint)}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div style="display:flex;align-items:center">
+    <div class="masthead-logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="white" stroke-width="1.5"/>
+        <path d="M12 6v6l4 2" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Time<span>travel</span>
+    </div>
+    <div class="masthead-rule"></div>
+    <nav class="masthead-nav">
+      <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
+      <button class="nav-btn" onclick="showPage('review')">Claim Review</button>
+      <button class="nav-btn" onclick="showPage('timesensitive')">Time Sensitive</button>
+    </nav>
+  </div>
+  <div class="masthead-right">
+    <div class="status-dot" id="api-status-dot" title="Checking API..."></div>
+    <span id="api-status-label" style="font-size:11px;color:rgba(255,255,255,0.5)">connecting…</span>
+    <button class="submit-btn" onclick="openModal()">+ Submit Article</button>
+  </div>
+</header>
+
+<div class="ticker">
+  <span class="ticker-label">LIVE</span>
+  <span class="ticker-text" id="ticker-text">Loading live stats…</span>
+</div>
+
+<div class="app-body">
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page active">
+  <div class="dashboard-layout">
+    <div class="kpi-row" id="kpi-row">
+      <div class="kpi"><div class="kpi-label">Articles</div><div class="kpi-value skeleton" style="width:60px;height:36px"></div></div>
+      <div class="kpi"><div class="kpi-label">Claims Extracted</div><div class="kpi-value skeleton" style="width:60px;height:36px"></div></div>
+      <div class="kpi"><div class="kpi-label">Pending Review</div><div class="kpi-value skeleton" style="width:60px;height:36px"></div></div>
+      <div class="kpi"><div class="kpi-label">Approved</div><div class="kpi-value skeleton" style="width:60px;height:36px"></div></div>
+      <div class="kpi"><div class="kpi-label">Time Sensitive</div><div class="kpi-value skeleton" style="width:60px;height:36px"></div></div>
+    </div>
+    <div class="panel articles-panel">
+      <div class="panel-header">
+        <div class="panel-title">Recent Articles</div>
+        <span class="panel-action" onclick="showPage('review')">View all →</span>
+      </div>
+      <div id="articles-list"><div style="padding:20px"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div></div>
+    </div>
+    <div class="panel activity-panel">
+      <div class="panel-header"><div class="panel-title">Status Overview</div></div>
+      <div id="status-overview" style="padding:20px"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW -->
+<div id="page-review" class="page">
+  <div class="review-layout">
+    <div class="claims-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">Claims Queue</div>
+        <div class="sidebar-sub" id="sidebar-sub">Loading…</div>
+        <div class="sidebar-filters">
+          <button class="filter-chip active" onclick="filterClaims('all',this)">All</button>
+          <button class="filter-chip" onclick="filterClaims('pending',this)">Pending</button>
+          <button class="filter-chip" onclick="filterClaims('approved',this)">Approved</button>
+          <button class="filter-chip" onclick="filterClaims('rejected',this)">Rejected</button>
+        </div>
+      </div>
+      <div id="claims-list"><div style="padding:20px"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div></div>
+    </div>
+    <div class="review-main" id="review-main">
+      <div class="review-empty">
+        <div class="review-empty-icon">📋</div>
+        <div style="font-size:14px;font-weight:500">Select a claim to begin review</div>
+        <div style="font-size:12px;color:var(--ink-faint)">Claims loading from API…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TIME SENSITIVE -->
+<div id="page-timesensitive" class="page">
+  <div class="timesensitive-layout">
+    <div class="ts-header">
+      <div class="ts-title">Time-Sensitive Claims</div>
+      <div class="ts-sub">Claims with low freshness scores that may need rewriting to reflect current data.</div>
+    </div>
+    <div class="ts-grid" id="ts-grid">
+      <div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--ink-faint)">Loading time-sensitive claims…</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">Submit Article</div>
+    <div class="modal-sub">Paste article text or provide a URL to begin claim extraction.</div>
+    <div class="form-group">
+      <label class="form-label">Article URL (optional)</label>
+      <input type="url" class="form-input" placeholder="https://…" id="article-url">
+    </div>
+    <div class="form-divider">or paste text directly</div>
+    <div class="form-group">
+      <label class="form-label">Article Text</label>
+      <textarea class="form-input form-textarea" placeholder="Paste the full article text here…" id="article-text"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Source / Publication</label>
+        <input type="text" class="form-input" placeholder="e.g. Reuters" id="article-source">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Published Date</label>
+        <input type="date" class="form-input" id="article-date">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-submit" id="modal-submit-btn" onclick="submitArticle()">Submit & Analyse →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = 'http://localhost:8000';
+
+// ---- STATE ----
+let allArticles = [];
+let allClaims = [];
+let activeClaim = null;
+let activeFilter = 'all';
+
+// ---- API ----
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API_BASE + path, {
+    headers: { 'Content-Type': 'application/json', ...opts.headers },
+    ...opts
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+// ---- HEALTH CHECK ----
+async function checkHealth() {
+  try {
+    await apiFetch('/health');
+    document.getElementById('api-status-dot').classList.remove('offline');
+    document.getElementById('api-status-label').textContent = 'API connected';
+  } catch {
+    document.getElementById('api-status-dot').classList.add('offline');
+    document.getElementById('api-status-label').textContent = 'API offline';
+  }
+}
+
+// ---- DASHBOARD ----
+async function loadDashboard() {
+  try {
+    const articles = await apiFetch('/articles/');
+    allArticles = articles;
+
+    // flatten all claims from articles
+    let claims = [];
+    for (const a of articles) {
+      try {
+        const detail = await apiFetch(`/articles/${a.id}`);
+        if (detail.claims) claims = claims.concat(detail.claims.map(c => ({ ...c, articleTitle: a.raw_text?.substring(0, 60) || a.url || 'Untitled' })));
+      } catch {}
+    }
+    allClaims = claims;
+
+    // KPIs
+    const pending = claims.filter(c => c.review_status === 'unreviewed').length;
+    const approved = claims.filter(c => c.review_status === 'approved').length;
+    const timeSensitive = claims.filter(c => c.freshness_score !== null && c.freshness_score < 40).length;
+
+    document.getElementById('kpi-row').innerHTML = `
+      <div class="kpi"><div class="kpi-label">Articles</div><div class="kpi-value">${articles.length}</div><div class="kpi-sub">Total submitted</div></div>
+      <div class="kpi"><div class="kpi-label">Claims Extracted</div><div class="kpi-value">${claims.length}</div><div class="kpi-sub">Avg ${articles.length ? (claims.length/articles.length).toFixed(1) : 0} per article</div></div>
+      <div class="kpi"><div class="kpi-label">Pending Review</div><div class="kpi-value ${pending > 0 ? 'amber' : 'green'}">${pending}</div><div class="kpi-sub">${pending > 0 ? 'Need attention' : 'All reviewed'}</div></div>
+      <div class="kpi"><div class="kpi-label">Approved</div><div class="kpi-value green">${approved}</div><div class="kpi-sub">${claims.length ? Math.round(approved/claims.length*100) : 0}% approval rate</div></div>
+      <div class="kpi"><div class="kpi-label">Time Sensitive</div><div class="kpi-value ${timeSensitive > 0 ? 'red' : 'green'}">${timeSensitive}</div><div class="kpi-sub">${timeSensitive > 0 ? 'Need rewriting' : 'All fresh'}</div></div>
+    `;
+
+    // Articles list
+    const sorted = [...articles].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 8);
+    document.getElementById('articles-list').innerHTML = sorted.length ? sorted.map(a => {
+      const articleClaims = claims.filter(c => c.article_id === a.id);
+      const pendingCount = articleClaims.filter(c => c.review_status === 'unreviewed').length;
+      return `<div class="article-row" onclick="showPage('review');loadReviewForArticle('${a.id}')">
+        <div style="flex:1">
+          <div class="article-title">${(a.raw_text || a.url || 'Untitled article').substring(0,80)}${(a.raw_text||'').length > 80 ? '…' : ''}</div>
+          <div class="article-meta">${a.source || 'Unknown source'} · ${timeAgo(a.created_at)} · ${articleClaims.length} claims</div>
+        </div>
+        <span class="badge badge-${a.status === 'processing' ? 'processing' : a.status === 'done' ? 'done' : 'error'}">${a.status}</span>
+        ${pendingCount > 0 ? `<span class="claim-count">${pendingCount} pending</span>` : ''}
+      </div>`;
+    }).join('') : '<div style="padding:20px;color:var(--ink-faint);font-size:13px;text-align:center">No articles yet. Submit one to get started.</div>';
+
+    // Status overview
+    const byStatus = {};
+    claims.forEach(c => { byStatus[c.review_status] = (byStatus[c.review_status] || 0) + 1; });
+    document.getElementById('status-overview').innerHTML = `
+      <div style="padding:16px 20px">
+        ${Object.entries(byStatus).map(([k,v]) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:13px;color:var(--ink-muted);text-transform:capitalize">${k}</span>
+            <span style="font-family:var(--font-display);font-size:20px;font-weight:600">${v}</span>
+          </div>`).join('') || '<div style="color:var(--ink-faint);font-size:13px">No claims yet.</div>'}
+      </div>`;
+
+    // Ticker
+    document.getElementById('ticker-text').textContent =
+      `${articles.length} articles · ${claims.length} claims extracted · ${pending} pending review · ${timeSensitive} time-sensitive`;
+
+  } catch (e) {
+    document.getElementById('articles-list').innerHTML = `<div class="error-banner">Could not load articles: ${e.message}</div>`;
+  }
+}
+
+// ---- REVIEW ----
+async function loadReview() {
+  try {
+    if (allClaims.length === 0) await loadDashboard();
+    renderClaimsList();
+  } catch(e) {
+    document.getElementById('claims-list').innerHTML = `<div class="error-banner">${e.message}</div>`;
+  }
+}
+
+async function loadReviewForArticle(articleId) {
+  await loadReview();
+  const first = allClaims.find(c => c.article_id === articleId);
+  if (first) openClaim(first.id);
+}
+
+function renderClaimsList() {
+  const filtered = activeFilter === 'all' ? allClaims : allClaims.filter(c => {
+    if (activeFilter === 'pending') return c.review_status === 'unreviewed';
+    if (activeFilter === 'approved') return c.review_status === 'approved';
+    if (activeFilter === 'rejected') return c.review_status === 'rejected';
+    return true;
+  });
+  const pending = allClaims.filter(c => c.review_status === 'unreviewed').length;
+  document.getElementById('sidebar-sub').textContent = `${pending} pending · ${allArticles.length} articles`;
+  document.getElementById('claims-list').innerHTML = filtered.length ? filtered.map(c => {
+    const fs = c.freshness_score || 0;
+    const color = fs > 60 ? 'var(--green)' : fs > 35 ? 'var(--amber)' : 'var(--red)';
+    const statusClass = c.review_status === 'approved' ? 'approved' : c.review_status === 'rejected' ? 'rejected' : '';
+    return `<div class="claim-item ${statusClass} ${activeClaim === c.id ? 'active' : ''}" onclick="openClaim('${c.id}')">
+      <div class="claim-text-preview">${c.claim_text}</div>
+      <div class="claim-meta-row">
+        <span class="badge badge-${c.review_status === 'approved' ? 'done' : c.review_status === 'rejected' ? 'error' : 'pending'}" style="font-size:10px">${c.review_status}</span>
+        <div class="freshness-bar"><div class="freshness-fill" style="width:${fs}%;background:${color}"></div></div>
+        <span style="font-size:10px;color:var(--ink-faint)">${fs}</span>
+      </div>
+      <div style="font-size:10px;color:var(--ink-faint);margin-top:4px">${(c.source_suggestions||[]).length} sources</div>
+    </div>`;
+  }).join('') : '<div style="padding:20px;font-size:12px;color:var(--ink-faint);text-align:center">No claims in this category.</div>';
+}
+
+function filterClaims(f, el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  activeFilter = f;
+  renderClaimsList();
+}
+
+function openClaim(id) {
+  activeClaim = id;
+  renderClaimsList();
+  const claim = allClaims.find(c => c.id === id);
+  if (!claim) return;
+  const sources = claim.source_suggestions || [];
+  const relColor = { high: 'rel-high', medium: 'rel-medium', low: 'rel-low' };
+  const fs = claim.freshness_score || 0;
+  document.getElementById('review-main').innerHTML = `
+    <div class="claim-detail">
+      <div class="claim-detail-header">
+        <div class="claim-detail-label">Claim for Review</div>
+        <div class="claim-detail-text">"${claim.claim_text}"</div>
+        <div class="claim-detail-badges">
+          <span class="badge badge-${claim.review_status === 'approved' ? 'done' : claim.review_status === 'rejected' ? 'error' : 'pending'}">${claim.review_status}</span>
+          <span class="badge" style="background:var(--paper-dark);color:var(--ink-muted)">Freshness: ${fs}/100</span>
+          ${claim.status ? `<span class="badge" style="background:var(--paper-dark);color:var(--ink-muted)">${claim.status}</span>` : ''}
+        </div>
+      </div>
+      ${claim.analysis_notes ? `<div class="claim-analysis"><div class="claim-analysis-title">AI Analysis</div><div class="claim-analysis-text">${claim.analysis_notes}</div></div>` : ''}
+      <div style="margin-bottom:24px">
+        <div class="sources-title">Sources (${sources.length})</div>
+        ${sources.length ? sources.map(s => `
+          <div class="source-card">
+            <div class="source-card-top">
+              <div><div class="source-title">${s.title || 'Untitled'}</div><div class="source-url">${s.url || ''}</div></div>
+              <span class="badge ${relColor[s.reliability] || 'rel-low'}">${s.reliability || 'unknown'}</span>
+            </div>
+            ${s.summary ? `<div class="source-summary">${s.summary}</div>` : ''}
+          </div>`).join('') : '<div style="font-size:12px;color:var(--ink-faint);padding:12px 0">No sources found for this claim.</div>'}
+      </div>
+      <div class="review-actions">
+        <button class="btn-approve" onclick="reviewClaim('${id}','approved')">✓ Approve</button>
+        <button class="btn-reject" onclick="reviewClaim('${id}','rejected')">✗ Reject</button>
+        <input class="notes-input" placeholder="Add review notes…" id="notes-${id}" value="${claim.analysis_notes || ''}">
+        <button class="btn-skip" onclick="nextClaim('${id}')">Skip →</button>
+      </div>
+    </div>`;
+}
+
+async function reviewClaim(id, reviewStatus) {
+  const notes = document.getElementById('notes-' + id)?.value || '';
+  try {
+    await apiFetch(`/claims/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ review_status: reviewStatus, analysis_notes: notes || undefined })
+    });
+    const claim = allClaims.find(c => c.id === id);
+    if (claim) { claim.review_status = reviewStatus; if (notes) claim.analysis_notes = notes; }
+    showToast(reviewStatus === 'approved' ? 'Claim approved' : 'Claim rejected', reviewStatus === 'approved' ? 'success' : 'error');
+    renderClaimsList();
+    const next = allClaims.find(c => c.review_status === 'unreviewed' && c.id !== id);
+    if (next) setTimeout(() => openClaim(next.id), 200);
+    else document.getElementById('review-main').innerHTML = `<div class="review-empty"><div class="review-empty-icon">🎉</div><div style="font-size:14px;font-weight:500">All claims reviewed!</div></div>`;
+  } catch(e) {
+    showToast('Failed to save: ' + e.message, 'error');
+  }
+}
+
+function nextClaim(id) {
+  const idx = allClaims.findIndex(c => c.id === id);
+  const next = allClaims.slice(idx + 1).find(c => c.review_status === 'unreviewed');
+  if (next) openClaim(next.id);
+}
+
+// ---- TIME SENSITIVE ----
+function loadTimeSensitive() {
+  const ts = allClaims.filter(c => (c.freshness_score || 0) < 50 && c.review_status === 'unreviewed');
+  const grid = document.getElementById('ts-grid');
+  if (!ts.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;padding:60px;text-align:center;color:var(--ink-faint);font-size:14px">No time-sensitive claims found. All claims are fresh!</div>';
+    return;
+  }
+  grid.innerHTML = ts.map(c => {
+    const fs = c.freshness_score || 0;
+    const fpClass = fs > 60 ? 'fp-high' : fs > 35 ? 'fp-med' : 'fp-low';
+    const suggested = suggestRewrite(c.claim_text);
+    return `<div class="ts-card" id="ts-card-${c.id}">
+      <div class="ts-card-header">
+        <div class="ts-card-label">⏱ Time Sensitive</div>
+        <span class="freshness-pill ${fpClass}">Freshness: ${fs}/100</span>
+      </div>
+      <div class="ts-card-body">
+        <div class="ts-section-label">Original</div>
+        <div class="ts-original-text">${c.claim_text}</div>
+        <div class="ts-section-label">Suggested Rewrite</div>
+        <div class="ts-rewrite-text" id="rewrite-${c.id}">${suggested}</div>
+        <div class="ts-actions">
+          <button class="ts-btn-accept" onclick="acceptRewrite('${c.id}')">✓ Accept</button>
+          <button class="ts-btn-edit" onclick="editRewrite('${c.id}')">Edit</button>
+          <button class="ts-btn-dismiss" onclick="dismissTS('${c.id}')">Dismiss</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function suggestRewrite(text) {
+  // Simple heuristic rewrites for time-relative phrases
+  const now = new Date();
+  const monthYear = now.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+  return text
+    .replace(/over the past year/gi, `between ${new Date(now.getFullYear()-1, now.getMonth()).toLocaleString('en-GB',{month:'long',year:'numeric'})} and ${monthYear}`)
+    .replace(/recently/gi, `in ${monthYear}`)
+    .replace(/currently/gi, `as of ${monthYear}`)
+    .replace(/this year/gi, `in ${now.getFullYear()}`)
+    .replace(/last year/gi, `in ${now.getFullYear()-1}`)
+    .replace(/in recent months/gi, `in ${monthYear}`)
+    .replace(/latest/gi, `${monthYear}`);
+}
+
+function acceptRewrite(id) {
+  const rewrite = document.getElementById('rewrite-' + id)?.textContent;
+  const claim = allClaims.find(c => c.id === id);
+  if (claim && rewrite) claim.claim_text = rewrite;
+  const card = document.getElementById('ts-card-' + id);
+  card.style.opacity = '0';
+  card.style.transition = 'opacity 300ms';
+  setTimeout(() => card.remove(), 300);
+  showToast('Rewrite accepted', 'success');
+}
+
+function editRewrite(id) {
+  const el = document.getElementById('rewrite-' + id);
+  el.contentEditable = 'true';
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  window.getSelection().removeAllRanges();
+  window.getSelection().addRange(range);
+}
+
+function dismissTS(id) {
+  const card = document.getElementById('ts-card-' + id);
+  card.style.opacity = '0';
+  card.style.transition = 'opacity 300ms';
+  setTimeout(() => card.remove(), 300);
+}
+
+// ---- NAV ----
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const map = { dashboard: 0, review: 1, timesensitive: 2 };
+  document.querySelectorAll('.nav-btn')[map[name]].classList.add('active');
+  if (name === 'review') loadReview();
+  if (name === 'timesensitive') loadTimeSensitive();
+}
+
+// ---- MODAL ----
+function openModal() { document.getElementById('modal-overlay').classList.add('open'); }
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+async function submitArticle() {
+  const text = document.getElementById('article-text').value.trim();
+  const url = document.getElementById('article-url').value.trim();
+  const source = document.getElementById('article-source').value.trim();
+  const date = document.getElementById('article-date').value;
+  if (!text && !url) { showToast('Please provide article text or a URL', 'error'); return; }
+  const btn = document.getElementById('modal-submit-btn');
+  btn.textContent = 'Submitting…'; btn.disabled = true;
+  try {
+    await apiFetch('/articles/', {
+      method: 'POST',
+      body: JSON.stringify({ raw_text: text || null, url: url || null, source: source || null, published_at: date || null })
+    });
+    closeModal();
+    showToast('Article submitted — extracting claims…', 'success');
+    document.getElementById('article-text').value = '';
+    document.getElementById('article-url').value = '';
+    document.getElementById('article-source').value = '';
+    document.getElementById('article-date').value = '';
+    setTimeout(() => loadDashboard(), 2000);
+  } catch(e) {
+    showToast('Failed to submit: ' + e.message, 'error');
+  } finally {
+    btn.textContent = 'Submit & Analyse →'; btn.disabled = false;
+  }
+}
+
+// ---- HELPERS ----
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr);
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h/24)}d ago`;
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  if (type === 'success') t.style.borderLeft = '3px solid var(--green)';
+  else if (type === 'error') t.style.borderLeft = '3px solid var(--red)';
+  else t.style.borderLeft = 'none';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ---- INIT ----
+checkHealth();
+loadDashboard();
+setInterval(checkHealth, 30000);
+setInterval(() => { if (document.getElementById('page-dashboard').classList.contains('active')) loadDashboard(); }, 60000);
+</script>
+</body>
+</html>
