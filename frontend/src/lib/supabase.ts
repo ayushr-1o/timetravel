@@ -1,5 +1,5 @@
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-console.log('URL?', supabaseUrl)
-console.log('KEY?', !!supabaseAnonKey)
+if (!supabaseUrl) throw new Error('MISSING VITE_SUPABASE_URL')
+if (!supabaseAnonKey) throw new Error('MISSING VITE_SUPABASE_ANON_KEY')
