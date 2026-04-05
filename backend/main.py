@@ -20,7 +20,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://timetravel-frontend.up.railway.app/"  
+        "https://timetravel-frontend.up.railway.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
