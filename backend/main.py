@@ -18,9 +18,9 @@ app = FastAPI(title="TimeTravel Claim Extractor", version="2.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "*"],  # Everything
+    allow_origins=["*"],  # Update to your Railway frontend URL after deploy
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
