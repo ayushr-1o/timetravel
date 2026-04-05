@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Article } from '../types/article'
+import { API_URL } from '../config';
 
 export default function Dashboard() {
   const [articles, setArticles] = useState<Article[]>([])

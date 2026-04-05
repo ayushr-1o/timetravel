@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Article, Claim } from '../types/article'
+import { API_URL } from '../config';
 
 export default function ArticleDetail() {
   const { id } = useParams()
@@ -40,7 +41,7 @@ export default function ArticleDetail() {
 
     setProcessing(true)
     try {
-      const response = await fetch('http://127.0.0.1:8000/extract-claims', {
+      const response = await fetch(`${API_URL}/extract-claims`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ article_id: id })

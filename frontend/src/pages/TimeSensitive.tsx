@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_URL } from '../config';
 
 interface ClaimObject {
   claim_text: string;
@@ -22,7 +23,7 @@ export default function TimeSensitive() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8000/claims/time-sensitive')
+    fetch(`${API_URL}/claims/time-sensitive`)
       .then(res => res.json())
       .then((data: SensitiveClaim[]) => {
         console.log('✅ Claims loaded:', data);

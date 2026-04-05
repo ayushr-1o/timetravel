@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_URL } from '../config';
 
 interface Claim {
   article_id: string;
@@ -27,7 +28,7 @@ export default function ClaimReview() {
 
   const loadClaims = () => {
     setLoading(true);
-    fetch('http://localhost:8000/claims/review')
+    fetch(`${API_URL}/claims/review`)
       .then(res => res.json())
       .then(data => { console.log('Claims:', data); setClaims(data); })
       .catch(err => console.error(err))
@@ -40,7 +41,7 @@ export default function ClaimReview() {
     const key = `${articleId}-${claimIndex}`;
     setUpdating(key);
     try {
-      await fetch(`http://localhost:8000/claims/${articleId}/${claimIndex}/status`, {
+      await fetch(`${API_URL}/claims/${articleId}/${claimIndex}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
