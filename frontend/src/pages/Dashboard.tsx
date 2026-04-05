@@ -108,14 +108,6 @@ export default function Dashboard() {
         alignItems: 'center'
       }}>
         Recent Articles
-        <span style={{ 
-          color: '#666', 
-          fontSize: '0.875rem', 
-          fontWeight: 500,
-          cursor: 'pointer'
-        }}>
-          View all →
-        </span>
       </h2>
 
       {loading && (
