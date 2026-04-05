@@ -256,7 +256,7 @@ class RewriteRequest(BaseModel):
 async def timeless_rewrite(req: RewriteRequest):
     original = req.text.strip()
 
-    response = client.chat.completions.create(
+    response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
