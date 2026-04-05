@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import type { Article } from '../types/article'
 
 export default function SubmitArticle() {
   const [url, setUrl] = useState('')

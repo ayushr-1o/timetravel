@@ -1,13 +1,30 @@
 import { useState, useEffect } from 'react';
 
+interface ClaimObject {
+  claim_text: string;
+  sensitivity: string;
+  freshness_score: number;
+  analysis_notes: string;
+  status: string;
+  sources: Array<{ title: string; url: string }>;
+}
+
+interface SensitiveClaim {
+  article_id: string;
+  article_title: string | null;
+  claim_index: number;
+  suggestion: string;
+  claim: ClaimObject;
+}
+
 export default function TimeSensitive() {
-  const [claims, setClaims] = useState([]);
+  const [claims, setClaims] = useState<SensitiveClaim[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('http://localhost:8000/claims/time-sensitive')
       .then(res => res.json())
-      .then(data => {
+      .then((data: SensitiveClaim[]) => {
         console.log('✅ Claims loaded:', data);
         setClaims(Array.isArray(data) ? data : []);
       })
@@ -49,7 +66,7 @@ export default function TimeSensitive() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-        {claims.map((item, index) => (
+        {claims.map((item: SensitiveClaim, index: number) => (
           <div key={index} style={{
             background: 'white',
             borderRadius: 20,
@@ -60,14 +77,7 @@ export default function TimeSensitive() {
           }}>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-              <div style={{
-                background: '#fee2e2',
-                color: '#991b1b',
-                padding: '8px 16px',
-                borderRadius: 999,
-                fontSize: 14,
-                fontWeight: 700
-              }}>
+              <div style={{ background: '#fee2e2', color: '#991b1b', padding: '8px 16px', borderRadius: 999, fontSize: 14, fontWeight: 700 }}>
                 Priority #{index + 1}
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -79,13 +89,7 @@ export default function TimeSensitive() {
             </div>
 
             {/* Original */}
-            <div style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: 16,
-              padding: '24px 28px',
-              marginBottom: 24
-            }}>
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: '24px 28px', marginBottom: 24 }}>
               <div style={{ color: '#64748b', fontSize: 14, marginBottom: 12, fontWeight: 600 }}>
                 📄 Original Claim
               </div>
@@ -94,76 +98,40 @@ export default function TimeSensitive() {
               </div>
             </div>
 
+            {/* Staleness bar */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: 13, color: '#888' }}>Staleness Risk</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#e03e3e' }}>
+                  {Math.round((1 - item.claim.freshness_score) * 100)}%
+                </span>
+              </div>
+              <div style={{ background: '#f0f0f0', borderRadius: 99, height: 8 }}>
+                <div style={{ width: `${Math.round((1 - item.claim.freshness_score) * 100)}%`, background: '#e03e3e', height: '100%', borderRadius: 99 }} />
+              </div>
+            </div>
+
             {/* Timeless Suggestion */}
-            <div style={{
-              background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)',
-              border: '2px solid #10b981',
-              borderRadius: 20,
-              padding: '28px 32px',
-              marginBottom: 24,
-              boxShadow: '0 12px 32px rgba(16, 185, 129, 0.25)'
-            }}>
+            <div style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)', border: '2px solid #10b981', borderRadius: 20, padding: '28px 32px', marginBottom: 24, boxShadow: '0 12px 32px rgba(16, 185, 129, 0.25)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-                <div style={{
-                  width: 48, height: 48,
-                  background: '#10b981',
-                  borderRadius: 999,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
+                <div style={{ width: 48, height: 48, background: '#10b981', borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{ color: 'white', fontSize: 22 }}>✨</span>
                 </div>
-                <div>
-                  <div style={{ fontSize: 17, fontWeight: 800, color: '#065f46' }}>
-                    Timeless Rewrite
-                  </div>
-                  <button style={{
-                    fontSize: 12, color: '#059669',
-                    padding: '4px 12px', background: '#d1fae5',
-                    border: '1px solid #a7f3d0', borderRadius: 8,
-                    cursor: 'pointer', marginLeft: 12
-                  }}>
-                    Copy
-                  </button>
-                </div>
+                <div style={{ fontSize: 17, fontWeight: 800, color: '#065f46' }}>Timeless Rewrite</div>
               </div>
-              <div style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: '#047857',
-                lineHeight: 1.6,
-                padding: '20px 24px',
-                background: 'rgba(255, 255, 255, 0.8)',
-                borderRadius: 16,
-                borderLeft: '5px solid #059669',
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
-              }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#047857', lineHeight: 1.6, padding: '20px 24px', background: 'rgba(255,255,255,0.8)', borderRadius: 16, borderLeft: '5px solid #059669' }}>
                 {item.suggestion || 'No suggestion available'}
               </div>
             </div>
 
             {/* Why */}
-            <div style={{
-              padding: '20px 24px',
-              background: '#eff6ff',
-              borderRadius: 16,
-              borderLeft: '5px solid #3b82f6'
-            }}>
-              <div style={{ fontSize: 14, color: '#1e40af', marginBottom: 12, fontWeight: 600 }}>
-                📋 Why Update?
-              </div>
-              <div style={{ fontSize: 15, color: '#1e3a8a', lineHeight: 1.6 }}>
-                {item.claim.analysis_notes}
-              </div>
+            <div style={{ padding: '20px 24px', background: '#eff6ff', borderRadius: 16, borderLeft: '5px solid #3b82f6' }}>
+              <div style={{ fontSize: 14, color: '#1e40af', marginBottom: 12, fontWeight: 600 }}>📋 Why Update?</div>
+              <div style={{ fontSize: 15, color: '#1e3a8a', lineHeight: 1.6 }}>{item.claim.analysis_notes}</div>
             </div>
 
             {/* Footer */}
-            <div style={{
-              marginTop: 24,
-              paddingTop: 20,
-              borderTop: '1px solid #f3f4f6',
-              fontSize: 14,
-              color: '#9ca3af'
-            }}>
+            <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #f3f4f6', fontSize: 14, color: '#9ca3af' }}>
               📰 {item.article_title || 'News Article'}
             </div>
           </div>
