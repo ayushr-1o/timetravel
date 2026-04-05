@@ -4,7 +4,7 @@ import Dashboard from './pages/Dashboard';
 import SubmitArticle from './pages/SubmitArticle';
 import ArticleDetail from './pages/ArticleDetail';
 import ClaimReview from './pages/ClaimReview';
-import TimeSensitive from './pages/TimelessRewrite';
+import TimelessRewrite from './pages/TimelessRewrite';
 
 function App() {
   return (
