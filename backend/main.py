@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from openai import OpenAI
 from typing import Literal, List, Dict
 from datetime import datetime
+import difflib
 
 load_dotenv()
 
@@ -253,17 +254,43 @@ class RewriteRequest(BaseModel):
 
 @app.post("/timeless-rewrite")
 async def timeless_rewrite(req: RewriteRequest):
-    response = openai_client.chat.completions.create(
+    original = req.text.strip()
+
+    response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
                 "role": "system",
-                "content": "Rewrite the given text to be timeless. Remove or replace time-sensitive phrases like 'yesterday', 'last week', 'recently', 'currently', 'now', 'today', specific dates, and references to recent events. Keep the meaning intact but make it read as if written for any point in time."
+                "content": (
+                    "Rewrite the text to make it timeless. Remove or replace time-sensitive "
+                    "phrases such as 'today', 'yesterday', 'currently', 'recently', "
+                    "'last week', 'this year', and explicit date references when possible. "
+                    "Preserve meaning and tone. If no timeless improvements are needed, "
+                    "return the text unchanged."
+                )
             },
             {
                 "role": "user",
-                "content": req.text
+                "content": original
             }
         ]
     )
-    return { "rewritten": response.choices[0].message.content }
+
+    rewritten = response.choices[0].message.content.strip()
+    changed = rewritten != original
+
+    diff = list(difflib.ndiff(original.splitlines(), rewritten.splitlines()))
+    diff_lines = []
+    for line in diff:
+        if line.startswith("- "):
+            diff_lines.append({"type": "removed", "text": line[2:]})
+        elif line.startswith("+ "):
+            diff_lines.append({"type": "added", "text": line[2:]})
+
+    return {
+        "original": original,
+        "rewritten": rewritten,
+        "changed": changed,
+        "message": "No timeless changes needed." if not changed else "Timeless rewrite complete.",
+        "diff_lines": diff_lines
+    }
