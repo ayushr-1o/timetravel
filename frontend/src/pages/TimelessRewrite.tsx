@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { API_URL } from '../lib/api'
+import { Fragment } from 'react'
 
-type DiffLine = {
-  type: 'removed' | 'added'
-  text: string
+type DiffRow = {
+  before: string
+  after: string
 }
 
 export default function TimelessRewrite() {
@@ -12,13 +13,13 @@ export default function TimelessRewrite() {
   const [output, setOutput] = useState('')
   const [changed, setChanged] = useState<boolean | null>(null)
   const [message, setMessage] = useState('')
-  const [diffLines, setDiffLines] = useState<DiffLine[]>([])
+  const [diffRows, setDiffRows] = useState<DiffRow[]>([])
   const [loading, setLoading] = useState(false)
 
   const handleRewrite = async () => {
     setLoading(true)
     setMessage('')
-    setDiffLines([])
+    setDiffRows([])
     setChanged(null)
 
     try {
@@ -33,7 +34,7 @@ export default function TimelessRewrite() {
       setOutput(data.rewritten)
       setChanged(data.changed)
       setMessage(data.message)
-      setDiffLines(data.diff_lines || [])
+      setDiffRows(data.diff_rows || [])
     } catch (e) {
       setMessage('Rewrite failed.')
     } finally {
@@ -42,16 +43,18 @@ export default function TimelessRewrite() {
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: '2rem auto', padding: '0 1rem' }}>
+    <div style={{ maxWidth: 1000, margin: '2rem auto', padding: '0 1rem' }}>
       <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
         Timeless Rewrite
       </h1>
 
       <p style={{ color: '#666', marginBottom: '1.5rem' }}>
-        Paste an excerpt and it will be rewritten to feel less tied to a specific moment in time.
+        Paste an excerpt and rewrite it so it feels less tied to a specific moment in time.
       </p>
 
       <textarea
+        id="timeless-input"
+        name="timeless-input"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder="Paste your excerpt here..."
@@ -108,25 +111,56 @@ export default function TimelessRewrite() {
             <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{output}</p>
           </div>
 
-          {changed && diffLines.length > 0 && (
-            <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 8, padding: '1rem' }}>
-              <div style={{ fontWeight: 700, marginBottom: '0.75rem' }}>What changed</div>
-              <div style={{ display: 'grid', gap: '0.5rem' }}>
-                {diffLines.map((line, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      padding: '0.65rem 0.8rem',
-                      borderRadius: 6,
-                      background: line.type === 'removed' ? '#fff1f0' : '#f6ffed',
-                      border: line.type === 'removed' ? '1px solid #ffccc7' : '1px solid #b7eb8f',
-                      color: '#333',
-                      fontFamily: 'inherit',
-                      whiteSpace: 'pre-wrap'
-                    }}
-                  >
-                    <strong>{line.type === 'removed' ? 'Before:' : 'After:'}</strong> {line.text}
-                  </div>
+          {changed && diffRows.length > 0 && (
+            <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ padding: '1rem', fontWeight: 700, borderBottom: '1px solid #eee' }}>
+                What changed
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr'
+              }}>
+                <div style={{
+                  padding: '0.85rem 1rem',
+                  fontWeight: 700,
+                  background: '#fff5f5',
+                  borderRight: '1px solid #eee',
+                  borderBottom: '1px solid #eee'
+                }}>
+                  Before
+                </div>
+                <div style={{
+                  padding: '0.85rem 1rem',
+                  fontWeight: 700,
+                  background: '#f6ffed',
+                  borderBottom: '1px solid #eee'
+                }}>
+                  After
+                </div>
+
+                {diffRows.map((row, i) => (
+                  <Fragment key={i}>
+                    <div style={{
+                      padding: '0.9rem 1rem',
+                      background: '#fff1f0',
+                      borderRight: '1px solid #eee',
+                      borderBottom: '1px solid #eee',
+                      whiteSpace: 'pre-wrap',
+                      color: '#333'
+                    }}>
+                      {row.before || '—'}
+                    </div>
+                    <div style={{
+                      padding: '0.9rem 1rem',
+                      background: '#f6ffed',
+                      borderBottom: '1px solid #eee',
+                      whiteSpace: 'pre-wrap',
+                      color: '#333'
+                    }}>
+                      {row.after || '—'}
+                    </div>
+                  </Fragment>
                 ))}
               </div>
             </div>

@@ -280,17 +280,36 @@ async def timeless_rewrite(req: RewriteRequest):
     changed = rewritten != original
 
     diff = list(difflib.ndiff(original.splitlines(), rewritten.splitlines()))
-    diff_lines = []
+    diff_rows = []
+
+    pending_removed = None
+
     for line in diff:
         if line.startswith("- "):
-            diff_lines.append({"type": "removed", "text": line[2:]})
+            pending_removed = line[2:]
         elif line.startswith("+ "):
-            diff_lines.append({"type": "added", "text": line[2:]})
+            if pending_removed is not None:
+                diff_rows.append({
+                    "before": pending_removed,
+                    "after": line[2:]
+                })
+                pending_removed = None
+            else:
+                diff_rows.append({
+                    "before": "",
+                    "after": line[2:]
+                })
+
+    if pending_removed is not None:
+        diff_rows.append({
+            "before": pending_removed,
+            "after": ""
+        })
 
     return {
         "original": original,
         "rewritten": rewritten,
         "changed": changed,
         "message": "No timeless changes needed." if not changed else "Timeless rewrite complete.",
-        "diff_lines": diff_lines
+        "diff_rows": diff_rows
     }
