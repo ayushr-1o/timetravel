@@ -1,73 +1,113 @@
-# React + TypeScript + Vite
+# TimeTravel
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+TimeTravel is a React + FastAPI application for extracting claims from articles, reviewing them, and rewriting time-sensitive excerpts into more timeless language.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Submit article URLs for processing
+- Extract claims from article content
+- Review claims with approve/reject actions
+- Group claim review by article to avoid confusion
+- Rewrite excerpts using **Timeless Rewrite**
+- View before/after changes for rewritten text
+- Clean dashboard with no seeded history
+- Railway-ready frontend and backend deployment
 
-## React Compiler
+## Product Areas
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Dashboard
+The dashboard provides a clean overview of the system and starts empty when no articles have been submitted.
 
-## Expanding the ESLint configuration
+### Submit Article
+Paste an article URL to submit it for extraction and review.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Claim Review
+Claims are grouped under their source article so reviewers can clearly see which claims belong to which article.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Timeless Rewrite
+Paste an excerpt and the app rewrites it to remove time-sensitive phrasing. It also shows:
+- the original version
+- the rewritten version
+- a before/after comparison of what changed
+- a message when no timeless changes are needed
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Tech Stack
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Frontend
+- React
+- TypeScript
+- Vite
+
+### Backend
+- FastAPI
+- Python
+
+### Data / Services
+- Supabase
+- OpenAI API
+
+## Environment Variables
+
+### Frontend
+Create the frontend environment with:
+
+```env
+VITE_API_URL=https://timetravel-backend.up.railway.app
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Backend
+Set these variables for the backend:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+OPENAI_API_KEY=your_openai_api_key
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
+
+## Local Development
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Backend
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+## Deployment
+
+The project is deployed on Railway with separate frontend and backend services.
+
+### Frontend deployment notes
+- Vite uses `VITE_API_URL` for backend requests
+- Docker build must expose `VITE_API_URL` at build time
+- Frontend is served as a static app
+
+### Backend deployment notes
+- FastAPI must allow CORS for:
+  - `http://localhost:5173`
+  - `https://timetravel-frontend.up.railway.app`
+- Do not include a trailing slash in the production frontend origin
+
+## Recent Changes
+
+- Replaced **Time Sensitive** with **Timeless Rewrite**
+- Added before/after rewrite comparison
+- Added “no timeless changes needed” response
+- Grouped claim review by article
+- Removed dead dashboard link
+- Cleared historical seeded/demo data
+- Fixed Railway frontend/backend connection issues
+- Fixed production CORS configuration
+
+## Notes
+
+This is a prototype, but it is structured for real deployment and live testing.

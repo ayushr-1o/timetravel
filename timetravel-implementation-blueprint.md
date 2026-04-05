@@ -1,292 +1,305 @@
 # TimeTravel — Implementation Blueprint
 
-A complete technical and product blueprint for the TimeTravel final project: a journalism accuracy system that detects time-sensitive claims in articles, highlights them, and suggests timeless rewrites. Built for maximum professionalism on a free-first stack.
+A technical and product blueprint for TimeTravel: a journalism workflow tool that extracts claims from articles, supports editorial review, and rewrites time-sensitive excerpts into timeless language.
 
 ---
 
 ## 1. Project Overview
 
-**What it does:** TimeTravel ingests a news article URL, scrapes the content, runs it through GPT-4o-mini, and flags claims that may have become stale — with a freshness score, sensitivity rating, and a suggested timeless rewrite for each claim.
+**What it does:** TimeTravel lets a user submit an article URL, scrape and analyze its content, extract time-sensitive claims, review those claims by article, and use AI to rewrite pasted excerpts so they read more timelessly.
 
-**Audience:** Local news agencies and editorial teams who need to maintain the long-term accuracy of published articles.
+**Audience:** Journalists, editorial teams, newsroom operators, and content reviewers who want to maintain article accuracy and reduce time-bound phrasing.
 
-**Demo story in one sentence:** *A journalist pastes a news article URL — TimeTravel instantly shows which facts have aged, which need a rewrite, and suggests a timeless version of each outdated claim.*
+**Demo story in one sentence:** *A journalist submits an article, extracts claims for review, approves or rejects them by article, and uses Timeless Rewrite to turn dated wording into evergreen copy.*
 
 ---
 
-## 2. Actual Folder Structure
+## 2. Current Product Scope
+
+The current prototype includes four main workflows:
+
+1. **Dashboard**
+   - Clean overview of the system
+   - No seeded or demo history
+   - Starts in a fresh state if the database is empty
+
+2. **Submit Article**
+   - User pastes an article URL
+   - URL is stored and prepared for processing
+
+3. **Claim Review**
+   - Extracted claims are grouped under their source article
+   - Each article section can be expanded/collapsed
+   - Editors approve or reject claims individually
+
+4. **Timeless Rewrite**
+   - User pastes an excerpt directly
+   - AI rewrites it to remove time-sensitive wording
+   - UI shows original text, rewritten text, and a side-by-side before/after diff
+   - If no rewrite is needed, the app explicitly says so
+
+---
+
+## 3. Actual Folder Structure
+
+```text
 timetravel/
-├── archive/
-│ ├── n8n/
-│ │ └── workflow-notes.md ← original n8n pipeline notes
-│ └── prototype/
-│ └── timetravel-app.html ← original interactive UI prototype
 ├── backend/
-│ ├── models/
-│ │ ├── _init_.py
-│ │ └── schemas.py ← Pydantic request/response models
-│ ├── routers/
-│ │ ├── _init_.py
-│ │ ├── articles.py ← article CRUD endpoints
-│ │ └── claims.py ← claim review + time-sensitive endpoints
-│ ├── .env.example ← copy to .env and fill in keys
-│ ├── Dockerfile ← Railway deployment
-│ ├── main.py ← FastAPI app entry point
-│ └── requirements.txt
-├── docs/
-│ ├── README.md
-│ ├── architecture.md
-│ └── database-schema.md
+│   ├── Dockerfile
+│   ├── main.py
+│   ├── requirements.txt
+│   └── .env.example
 ├── frontend/
-│ ├── public/
-│ │ ├── favicon.svg
-│ │ └── icons.svg
-│ ├── src/
-│ │ ├── assets/
-│ │ ├── components/
-│ │ │ └── Layout.tsx
-│ │ ├── layouts/
-│ │ │ └── AppLayout.tsx
-│ │ ├── lib/
-│ │ │ └── supabase.ts ← Supabase client init
-│ │ ├── pages/
-│ │ │ ├── ArticleDetail.tsx ← claims sidebar + extract button
-│ │ │ ├── ClaimReview.tsx ← pending claims grid + approve/reject
-│ │ │ ├── Dashboard.tsx ← stats + article list
-│ │ │ ├── SubmitArticle.tsx ← URL submission form
-│ │ │ └── TimeSensitive.tsx ← high-risk claims + timeless rewrites
-│ │ ├── types/
-│ │ │ └── article.ts ← TypeScript interfaces
-│ │ ├── App.tsx
-│ │ ├── App.css
-│ │ ├── index.css
-│ │ └── main.tsx
-│ ├── .env.example
-│ ├── index.html
-│ ├── package.json
-│ ├── tsconfig.json
-│ └── vite.config.ts
+│   ├── Dockerfile
+│   ├── Caddyfile
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── .env.example
+│   └── src/
+│       ├── components/
+│       │   └── Layout.tsx
+│       ├── lib/
+│       │   └── api.ts
+│       ├── config.ts
+│       ├── pages/
+│       │   ├── Dashboard.tsx
+│       │   ├── SubmitArticle.tsx
+│       │   ├── ArticleDetail.tsx
+│       │   ├── ClaimReview.tsx
+│       │   └── TimelessRewrite.tsx
+│       ├── App.tsx
+│       └── main.tsx
 └── README.md
-
-text
+```
 
 ---
 
-## 3. Tech Stack
+## 4. Tech Stack
 
 | Layer | Tool | Notes |
 |-------|------|-------|
-| **Frontend** | React 18 + Vite + React Router v6 | Deployed on Railway |
-| **Backend** | FastAPI + Python | Deployed on Railway via Dockerfile |
-| **AI** | GPT-4o-mini (OpenAI) | Claim extraction + timeless rewrites |
-| **Scraping** | BeautifulSoup + Requests | Generic paragraph extraction |
-| **Database** | Supabase Postgres | JSONB for extracted_claims |
-| **Auth** | Supabase (available) | Email + social login |
-
-**Cost estimate for demo use:** €0–€5 total.
+| Frontend | React + TypeScript + Vite | Static build served on Railway |
+| Routing | React Router | Client-side page routing |
+| Backend | FastAPI + Python | API service on Railway |
+| AI | OpenAI GPT-4o-mini | Claim extraction and timeless rewriting |
+| Scraping | Requests + BeautifulSoup | Article text extraction |
+| Database | Supabase Postgres | Stores submitted articles and extracted claims |
+| Hosting | Railway | Separate frontend and backend services |
 
 ---
 
-## 4. Database Schema (Supabase Postgres)
+## 5. Data Model
 
-Claims are stored as a JSONB array inside the `articles` table for prototype simplicity. Each claim object follows this structure:
+The prototype uses an `articles` table as the main source of truth.
 
-``````sql
--- Articles table (single source of truth)
+### Articles table
+
+```sql
 CREATE TABLE articles (
-  id               UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  title            TEXT,
-  source           TEXT,                          -- original article URL
-  description      TEXT,
-  raw_text         TEXT,                          -- scraped article body
-  extracted_claims JSONB DEFAULT '[]'::jsonb,     -- array of claim objects
-  status           TEXT DEFAULT 'pending',        -- pending | done
-  processed_at     TIMESTAMPTZ,
-  submitted_at     TIMESTAMPTZ DEFAULT NOW()
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT,
+  source TEXT,
+  description TEXT,
+  raw_text TEXT,
+  extracted_claims JSONB DEFAULT '[]'::jsonb,
+  status TEXT DEFAULT 'pending',
+  processed_at TIMESTAMPTZ,
+  submitted_at TIMESTAMPTZ DEFAULT NOW()
 );
+```
 
--- GIN index for fast JSONB queries
-CREATE INDEX IF NOT EXISTS idx_articles_extracted_claims_gin
-  ON articles USING GIN (extracted_claims);
+### Claim object inside `extracted_claims`
 
-CREATE INDEX IF NOT EXISTS idx_articles_status
-  ON articles (status);
-``````
-
-### Claim Object Schema (inside extracted_claims JSONB)
-
-``````json
+```json
 {
-  "claim_text": "exact claim sentence from article",
+  "claim_text": "Exact claim sentence from article",
   "sensitivity": "low | medium | high",
   "freshness_score": 0.0,
-  "analysis_notes": "why this claim may become outdated",
+  "analysis_notes": "Why this claim may become outdated",
   "status": "pending | approved | rejected",
   "sources": [
     { "title": "Source name", "url": "https://..." }
   ]
 }
-``````
+```
+
+This keeps the schema simple for a prototype while still supporting extraction and review workflows.[user query]
 
 ---
 
-## 5. API Endpoints
+## 6. API Endpoints
 
 | Method | Route | Description |
 |--------|-------|-------------|
-| GET | `/health` | Health check |
-| POST | `/extract-claims` | Scrape URL → GPT → save claims to Supabase |
-| GET | `/claims/review?status_filter=pending` | Flat list of claims by status |
-| POST | `/claims/{article_id}/{claim_index}/status` | Approve or reject a claim |
-| GET | `/claims/time-sensitive` | High-sensitivity + low-freshness claims + GPT timeless rewrites |
+| GET | `/health` | Health check endpoint |
+| POST | `/extract-claims` | Scrape article URL, extract claims, save to database |
+| GET | `/claims/review` | Return pending claims for review |
+| POST | `/claims/{article_id}/{claim_index}/status` | Update a claim to approved or rejected |
+| POST | `/timeless-rewrite` | Rewrite a pasted excerpt to remove time-sensitive language |
 
 ---
 
-## 6. AI Pipeline — GPT-4o-mini Prompts
+## 7. AI Workflows
 
-### Claim Extractor (in `/extract-claims`)
+### Claim Extraction
 
-Receives scraped article text, returns 3–8 time-sensitive claims:
-Extract 3-8 verifiable, time-sensitive claims from this article text.
+The claim extraction flow:
+1. Receives an article URL
+2. Scrapes article text
+3. Sends the content to GPT-4o-mini
+4. Returns structured claim objects with:
+   - claim text
+   - sensitivity
+   - freshness score
+   - analysis notes
+   - default review status
+   - sources
 
-Return ONLY a valid JSON array:
-[
-{ "claim_text": "exact claim sentence",
-"sensitivity": "high | medium | low",
-"freshness_score": 0.0-1.0,
-"analysis_notes": "why this claim may become outdated",
-"status": "pending",
-"sources": [{"title": "Source", "url": "<url>"}]
-} ]
+### Timeless Rewrite
 
-text
+The timeless rewrite flow:
+1. Receives a pasted excerpt
+2. Sends it to GPT-4o-mini with instructions to remove time-sensitive wording
+3. Returns:
+   - original text
+   - rewritten text
+   - `changed: true/false`
+   - a message indicating whether changes were needed
+   - side-by-side diff rows for UI display
 
-**Freshness score guide:** 0.0 = highly stale, 1.0 = very fresh/timeless.
-
-### Timeless Rewrite Generator (in `/claims/time-sensitive`)
-
-Receives a single time-bound claim, returns one generalized sentence:
-Rewrite this time-bound claim timelessly (no dates, numbers, or fiscal years):
-"<claim_text>"
-
-Return ONLY one generalized sentence:
-
-text
-
-**Example:**
-- Original: *"Trump is seeking $152m to reopen Alcatraz for the 2027 fiscal year."*
-- Timeless: *"Presidential budget proposals for federal prison infrastructure are subject to annual Congressional approval."*
+This is now a standalone user workflow rather than a derived “time-sensitive claims” page.[user query]
 
 ---
 
-## 7. Frontend — Pages & Routes
+## 8. Frontend Routes
 
 | Route | Page | Description |
 |-------|------|-------------|
-| `/` | Dashboard | Stats cards + article list + LIVE badge |
-| `/submit` | SubmitArticle | URL input form |
-| `/articles/:id` | ArticleDetail | Scraped text + claims sidebar + Extract button |
-| `/review` | ClaimReview | Grid of pending claims with Approve/Reject |
-| `/time-sensitive` | TimeSensitive | High-risk claims + timeless rewrite suggestions |
-
-### Claim Status Color System
-
-| Status | Color | Meaning |
-|--------|-------|---------|
-| `pending` | Orange | Awaiting editorial review |
-| `approved` | Green | Confirmed still accurate |
-| `rejected` | Red | Marked as outdated/incorrect |
-
-### Sensitivity Badge Colors
-
-| Level | Color | Meaning |
-|-------|-------|---------|
-| `high` | Red | Changes frequently (stats, budgets, positions) |
-| `medium` | Orange | May change over months |
-| `low` | Gray | Relatively stable |
+| `/` | Dashboard | Clean overview and empty-state entry point |
+| `/submit` | SubmitArticle | Submit a URL for article processing |
+| `/articles/:id` | ArticleDetail | View article details and extract claims |
+| `/review` | ClaimReview | Review pending claims grouped by article |
+| `/timeless-rewrite` | TimelessRewrite | Rewrite pasted excerpts into timeless language |
 
 ---
 
-## 8. Hosting & Deployment (Railway)
+## 9. UX Decisions
 
-### Backend (FastAPI)
+### Claim Review grouping
+Claims are grouped by article rather than displayed in one flat list. This reduces ambiguity and makes it easier to understand which claim belongs to which source article.[user query]
 
-``````dockerfile
-# backend/Dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-``````
+### Timeless Rewrite comparison
+The rewrite result displays:
+- original text
+- rewritten text
+- side-by-side “before” and “after” changes
 
-**Railway env vars:**
-SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=...
-OPENAI_API_KEY=...
+This makes the AI output more transparent for editorial use.[user query]
 
-text
-
-### Frontend (React/Vite)
-
-Build command: `npm run build`
-Output dir: `dist/`
-
-**Railway env vars:**
-VITE_SUPABASE_URL=https://xxx.supabase.co
-VITE_SUPABASE_ANON_KEY=...
-
-text
+### Clean dashboard state
+Historical demo data has been removed from the prototype so the app feels like a new product on first launch.[user query]
 
 ---
 
-## 9. Local Setup
+## 10. Deployment
+
+## Frontend
+The frontend is built with Vite and deployed as a static site on Railway.
+
+### Required frontend environment variables
+
+```env
+VITE_API_URL=https://timetravel-backend.up.railway.app
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### Frontend deployment note
+Because Vite injects environment variables at build time, the frontend Dockerfile must expose `VITE_API_URL` during the build step.[web:126][user query]
+
+## Backend
+The backend is deployed separately on Railway using FastAPI.
+
+### Required backend environment variables
+
+```env
+OPENAI_API_KEY=your_openai_api_key
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
+
+### CORS
+The backend must allow:
+- `http://localhost:5173`
+- `https://timetravel-frontend.up.railway.app`
+
+The production origin must **not** include a trailing slash, or CORS will fail.[user query][web:316]
+
+---
+
+## 11. Local Setup
 
 ### Backend
-``````bash
+
+```bash
 cd backend
 pip install -r requirements.txt
-cp .env.example .env        # fill in keys
+cp .env.example .env
 uvicorn main:app --reload
-# → http://localhost:8000
-``````
+```
 
 ### Frontend
-``````bash
+
+```bash
 cd frontend
 npm install
-cp .env.example .env.local  # fill in keys
+cp .env.example .env.local
 npm run dev
-# → http://localhost:5173
-``````
+```
 
 ---
 
-## 10. Demo Script
+## 12. Demo Flow
 
-Walk through this exact sequence for the final presentation:
+1. Open the dashboard
+2. Submit an article URL
+3. Open the article detail page
+4. Run claim extraction
+5. Go to Claim Review
+6. Review grouped claims by article
+7. Approve or reject one claim
+8. Open Timeless Rewrite
+9. Paste a time-bound excerpt
+10. Show original vs rewritten text and the before/after diff
 
-1. Open Dashboard — clean dark nav, LIVE badge, stats cards.
-2. Click **Submit Article** — paste a real BBC/Reuters URL.
-3. Submit → article appears in dashboard with status `pending`.
-4. Click article → **Article Detail** page → click **Extract Claims**.
-5. Claims appear in sidebar — sensitivity badges (HIGH/MEDIUM), freshness scores.
-6. Navigate to **Claim Review** — grid of 7 cards with Approve/Reject buttons.
-7. Approve a claim — card disappears from pending list instantly.
-8. Navigate to **Time Sensitive** — high-risk claims with green timeless rewrite boxes.
-9. Show the before/after: *"Trump is seeking $152m..."* → *"Presidential budget proposals are subject to Congressional approval."*
-
-This takes 90 seconds and demonstrates: **ingestion → extraction → editorial review → timeless rewriting**. That is the full product loop.
+This demonstrates the full loop: **submission → extraction → review → timeless rewriting**.[user query]
 
 ---
 
-## 11. What Makes This Extraordinary
+## 13. Current State
 
-- **Real scraping** — BeautifulSoup extracts live article text from any public URL, not mocked data.
-- **GPT-powered claim intelligence** — each claim has sensitivity, freshness score, and analysis notes from a real LLM call.
-- **Timeless rewrite suggestions** — the Time Sensitive page shows not just *what* is outdated but *how to fix it*, making it a genuine editorial tool.
-- **JSONB flexibility** — storing claims as JSONB arrays allows prototype-speed iteration without schema migrations.
-- **Approve/reject workflow** — Claim Review mirrors a real editorial moderation flow with instant DB updates.
-- **Staleness progress bars** — visual risk indicators make data scannable at a glance.
-- **Consistent inline styles** — no Tailwind dependency, works identically across all environments.
+The current prototype now includes:
+- live Railway frontend and backend deployment
+- working Supabase integration
+- claim extraction
+- grouped claim review
+- timeless rewrite with visible before/after comparison
+- cleaned data state with no old demo history
+- fixed frontend/backend API connection
+- fixed production CORS configuration
+
+---
+
+## 14. Product Value
+
+What makes the prototype strong:
+
+- Real article ingestion and scraping
+- Structured claim extraction with AI
+- Human review workflow for claims
+- A dedicated timeless rewrite workflow
+- Transparent rewrite comparison UI
+- Simple deployable architecture
+- Clean editorial-oriented interface
+
+The app now behaves more like an editorial utility than a generic prototype shell.[user query]
