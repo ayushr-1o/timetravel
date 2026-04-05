@@ -4,7 +4,7 @@ import Dashboard from './pages/Dashboard';
 import SubmitArticle from './pages/SubmitArticle';
 import ArticleDetail from './pages/ArticleDetail';
 import ClaimReview from './pages/ClaimReview';
-import TimeSensitive from './pages/TimeSensitive';
+import TimeSensitive from './pages/TimelessRewrite';
 
 function App() {
   return (
@@ -30,9 +30,9 @@ function App() {
             <ClaimReview />
           </Layout>
         } />
-        <Route path="/time-sensitive" element={
+        <Route path="/timeless-rewrite" element={
           <Layout>
-            <TimeSensitive />
+            <TimelessRewrite />
           </Layout>
         } />
         <Route path="*" element={

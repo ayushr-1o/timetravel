@@ -247,3 +247,23 @@ def generate_timeless_suggestion(claim_text: str) -> str:
     
     # Universal fallback
     return "Rewrite the claim to generalize without specific dates, dollar amounts, or fiscal years for evergreen accuracy."
+
+class RewriteRequest(BaseModel):
+    text: str
+
+@app.post("/timeless-rewrite")
+async def timeless_rewrite(req: RewriteRequest):
+    response = openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "Rewrite the given text to be timeless. Remove or replace time-sensitive phrases like 'yesterday', 'last week', 'recently', 'currently', 'now', 'today', specific dates, and references to recent events. Keep the meaning intact but make it read as if written for any point in time."
+            },
+            {
+                "role": "user",
+                "content": req.text
+            }
+        ]
+    )
+    return { "rewritten": response.choices[0].message.content }

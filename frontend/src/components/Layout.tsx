@@ -63,7 +63,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div style={{ display: 'flex', gap: '0.25rem' }}>
             {navLink('Dashboard', '/')}
             {navLink('Claim Review', '/review')}
-            {navLink('Time Sensitive', '/time-sensitive')}
+            {navLink('Timeless Rewrite', '/timeless-rewrite')}
           </div>
         </div>
 
